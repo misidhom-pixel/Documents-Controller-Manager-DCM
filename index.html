@@ -1,0 +1,276 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق ترتيب الترانيم - حسب السلم الموسيقي</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 100px 250px 1fr; /* تقسيم الشاشة مثل الصورة */
+            gap: 5px;
+            height: calc(100vh - 60px);
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        /* تنسيق الأعمدة */
+        .column {
+            background: white;
+            border: 2px solid #34495e;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .col-header {
+            background-color: #aadddd; /* لون سماوي مشابه للصورة */
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 2px solid #34495e;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .scroll-area {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* قائمة المفاتيح (Keys) */
+        .key-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            background: #e8e8e8;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: sans-serif; /* لظهور الحروف الإنجليزية بشكل جيد */
+        }
+
+        .key-btn:hover {
+            background-color: #d1d1d1;
+        }
+
+        .key-btn.active {
+            background-color: #c0392b; /* اللون الأحمر عند الاختيار */
+            color: white;
+        }
+
+        /* قائمة الترانيم (Titles) */
+        .song-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .song-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .song-item.active {
+            background-color: #e74c3c; /* أحمر فاتح للترنيمة المختارة */
+            color: white;
+        }
+
+        /* منطقة الكلمات (Lyrics) */
+        #lyrics-content {
+            padding: 20px;
+            white-space: pre-wrap; /* للحفاظ على تنسيق الأبيات */
+            font-size: 1.5rem;
+            line-height: 1.8;
+            background-color: #fcf8e3; /* خلفية صفراء فاتحة مثل الصورة */
+            height: 100%;
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        /* رسالة عند عدم اختيار شيء */
+        .placeholder {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #888;
+            font-style: italic;
+        }
+
+        /* تحسينات للشاشات الصغيرة */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 80px 1fr;
+                grid-template-rows: 1fr 1fr;
+            }
+            .lyrics-col {
+                grid-column: span 2;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    تطبيق مكتبة الترانيم (Service Builder)
+</header>
+
+<div class="container">
+    <!-- العمود الأول: السلم الموسيقي -->
+    <div class="column">
+        <div class="col-header">Key</div>
+        <div class="scroll-area" id="keys-list">
+            <!-- سيتم توليد المفاتيح هنا بالجافاسكربت -->
+        </div>
+    </div>
+
+    <!-- العمود الثاني: عناوين الترانيم -->
+    <div class="column">
+        <div class="col-header">Title</div>
+        <div class="scroll-area" id="titles-list">
+            <div class="placeholder">اختر السلم أولاً</div>
+        </div>
+    </div>
+
+    <!-- العمود الثالث: الكلمات -->
+    <div class="column lyrics-col">
+        <div class="col-header">Lyrics</div>
+        <div class="scroll-area">
+            <div id="lyrics-content">
+                <div class="placeholder">اختر ترنيمة لعرض كلماتها</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- قاعدة البيانات (يمكنك إضافة ترانيمك هنا بسهولة) ---
+    const database = [
+        {
+            key: "Cm",
+            title: "اهديك كل المجد",
+            lyrics: `اهديك كل المجد والكرامة
+ارفع يدايا نحوك و امجد اسمك
+
+انت عظيم ليس مثلك يا رب
+تصنع العجائب تصنع العجائب
+
+انت عظيم ليس مثلك يا رب
+تستطيع كل شئ تستطيع كل شئ`
+        },
+        {
+            key: "Cm",
+            title: "بارك بلادي",
+            lyrics: `بارك بلادي واسمع صلاتي
+يا رب جينا بنحط حياتنا قدامك`
+        },
+        {
+            key: "C",
+            title: "ابانا كم نحن نحبك",
+            lyrics: `ابانا كم نحن نحبك
+نسجد لك ونعظمك`
+        },
+        {
+            key: "D",
+            title: "يسوع اسمك عظيم",
+            lyrics: `يسوع اسمك عظيم
+عجيب مشير قدير`
+        },
+        {
+            key: "Dm",
+            title: "للجالس على العرش",
+            lyrics: `للجالس على العرش وللحمل
+البركة والكرامة والمجد والسلطان`
+        },
+        {
+            key: "G",
+            title: "عظيم عظيم",
+            lyrics: `عظيم عظيم عظيم هو رب الجنود`
+        }
+    ];
+
+    // قائمة السلالم الموسيقية الثابتة (كما في الصورة)
+    const musicalKeys = ["C", "Cm", "D", "Dm", "E", "Em", "F", "Fm", "G", "Gm", "A", "Am", "B", "Bm"];
+
+    // تعريف العناصر
+    const keysContainer = document.getElementById('keys-list');
+    const titlesContainer = document.getElementById('titles-list');
+    const lyricsContainer = document.getElementById('lyrics-content');
+
+    // 1. إنشاء أزرار المفاتيح (Keys)
+    musicalKeys.forEach(key => {
+        const btn = document.createElement('button');
+        btn.className = 'key-btn';
+        btn.innerText = key;
+        btn.onclick = () => filterSongsByKey(key, btn);
+        keysContainer.appendChild(btn);
+    });
+
+    // دالة تصفية الترانيم حسب المفتاح
+    function filterSongsByKey(selectedKey, clickedBtn) {
+        // تحديث شكل الزر النشط
+        document.querySelectorAll('.key-btn').forEach(b => b.classList.remove('active'));
+        clickedBtn.classList.add('active');
+
+        // مسح القائمة الحالية
+        titlesContainer.innerHTML = '';
+        lyricsContainer.innerHTML = '<div class="placeholder">اختر ترنيمة لعرض الكلمات</div>';
+
+        // البحث عن الترانيم المناسبة
+        const filteredSongs = database.filter(song => song.key === selectedKey);
+
+        if (filteredSongs.length === 0) {
+            titlesContainer.innerHTML = '<div class="placeholder" style="padding:10px">لا توجد ترانيم مسجلة لهذا السلم</div>';
+            return;
+        }
+
+        // إنشاء قائمة الترانيم
+        filteredSongs.forEach(song => {
+            const div = document.createElement('div');
+            div.className = 'song-item';
+            div.innerText = song.title;
+            div.onclick = () => showLyrics(song, div);
+            titlesContainer.appendChild(div);
+        });
+    }
+
+    // دالة عرض الكلمات
+    function showLyrics(song, clickedDiv) {
+        // تحديث شكل الترنيمة النشطة
+        document.querySelectorAll('.song-item').forEach(i => i.classList.remove('active'));
+        clickedDiv.classList.add('active');
+
+        // عرض الكلمات
+        lyricsContainer.innerText = song.lyrics;
+    }
+</script>
+
+</body>
+</html>
