@@ -1,276 +1,427 @@
+
+كود النسخة السابقة **لم يكن يحتوي** على "لوحة تحكم" مركزية (كان يحتوي فقط على زر إضافة وزر حذف صغير).
+
+بناءً على طلبك، قمت بتطوير الكود جذرياً. الآن:
+1.  يوجد زر **"⚙️ لوحة التحكم"** في الأعلى.
+2.  عند الضغط عليه، تفتح شاشة كاملة تحتوي على:
+    *   **زر إضافة ترنيمة جديدة.**
+    *   **قائمة بكل الترانيم** (مع زر **تعديل** وزر **حذف** بجانب كل ترنيمة).
+    *   **زر عودة للتطبيق.**
+
+هذا هو الكود النهائي والكامل (انسخه واحفظه):
+
 ```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تطبيق ترتيب الترانيم - حسب السلم الموسيقي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تطبيق الترانيم (لوحة التحكم)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+
+        :root {
+            --primary: #2c3e50;
+            --accent: #e74c3c;
+            --bg-light: #f4f7f6;
+            --header-h: 60px;
+        }
+
+        * { box-sizing: border-box; }
 
         body {
             font-family: 'Cairo', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f2f5;
+            background-color: var(--bg-light);
             height: 100vh;
             display: flex;
             flex-direction: column;
-        }
-
-        header {
-            background-color: #2c3e50;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            font-size: 1.2rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .container {
-            display: grid;
-            grid-template-columns: 100px 250px 1fr; /* تقسيم الشاشة مثل الصورة */
-            gap: 5px;
-            height: calc(100vh - 60px);
-            padding: 10px;
-            box-sizing: border-box;
-        }
-
-        /* تنسيق الأعمدة */
-        .column {
-            background: white;
-            border: 2px solid #34495e;
-            border-radius: 8px;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
         }
 
-        .col-header {
-            background-color: #aadddd; /* لون سماوي مشابه للصورة */
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-            border-bottom: 2px solid #34495e;
-            font-size: 1.2rem;
-            color: #333;
-        }
-
-        .scroll-area {
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        /* قائمة المفاتيح (Keys) */
-        .key-btn {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-bottom: 1px solid #ddd;
-            background: #e8e8e8;
-            font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: 0.2s;
-            font-family: sans-serif; /* لظهور الحروف الإنجليزية بشكل جيد */
-        }
-
-        .key-btn:hover {
-            background-color: #d1d1d1;
-        }
-
-        .key-btn.active {
-            background-color: #c0392b; /* اللون الأحمر عند الاختيار */
+        /* --- الرأس (Header) --- */
+        header {
+            background-color: var(--primary);
             color: white;
-        }
-
-        /* قائمة الترانيم (Titles) */
-        .song-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .song-item:hover {
-            background-color: #f9f9f9;
-        }
-
-        .song-item.active {
-            background-color: #e74c3c; /* أحمر فاتح للترنيمة المختارة */
-            color: white;
-        }
-
-        /* منطقة الكلمات (Lyrics) */
-        #lyrics-content {
-            padding: 20px;
-            white-space: pre-wrap; /* للحفاظ على تنسيق الأبيات */
-            font-size: 1.5rem;
-            line-height: 1.8;
-            background-color: #fcf8e3; /* خلفية صفراء فاتحة مثل الصورة */
-            height: 100%;
-            text-align: center;
-            color: #2c3e50;
-        }
-
-        /* رسالة عند عدم اختيار شيء */
-        .placeholder {
+            height: var(--header-h);
             display: flex;
-            justify-content: center;
             align-items: center;
-            height: 100%;
-            color: #888;
-            font-style: italic;
+            justify-content: space-between;
+            padding: 0 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100;
         }
 
-        /* تحسينات للشاشات الصغيرة */
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 80px 1fr;
-                grid-template-rows: 1fr 1fr;
-            }
-            .lyrics-col {
-                grid-column: span 2;
-            }
+        header h1 { font-size: 1.1rem; margin: 0; }
+        
+        /* زر لوحة التحكم */
+        .control-btn {
+            background-color: #34495e;
+            border: 1px solid #7f8c8d;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .control-btn:hover { background-color: #46637f; }
+
+        /* --- الحاوية الرئيسية (معكوسة للكمبيوتر) --- */
+        .container {
+            display: flex;
+            height: calc(100vh - var(--header-h));
+            overflow: hidden;
+            flex-direction: row-reverse; /* عكس الأعمدة كما طلبت */
+        }
+
+        /* --- الأعمدة --- */
+        
+        /* 1. عمود المفاتيح (يسار) */
+        .col-keys {
+            width: 15%; min-width: 60px; max-width: 100px;
+            background: #e0e0e0; border-right: 1px solid #ccc;
+            overflow-y: auto; display: flex; flex-direction: column;
+        }
+
+        .key-btn {
+            padding: 15px 5px; text-align: center; background: none; border: none;
+            border-bottom: 1px solid #ccc; font-weight: bold; font-size: 1rem;
+            width: 100%; cursor: pointer; font-family: sans-serif;
+        }
+        .key-btn.active { background-color: var(--accent); color: white; }
+
+        /* 2. عمود العناوين (وسط) */
+        .col-titles {
+            width: 30%; background: #fff; border-right: 1px solid #ccc;
+            overflow-y: auto;
+        }
+        
+        .col-header {
+            background: #dcdde1; padding: 8px; text-align: center;
+            font-weight: bold; position: sticky; top: 0; border-bottom: 1px solid #aaa;
+        }
+
+        .song-item {
+            padding: 12px 10px; border-bottom: 1px solid #eee; cursor: pointer;
+            font-size: 0.95rem; text-align: right;
+        }
+        .song-item:hover { background-color: #f9f9f9; }
+        .song-item.active { background-color: #fadbd8; color: #c0392b; font-weight: bold; }
+
+        /* 3. عمود الكلمات (يمين) */
+        .col-lyrics {
+            flex: 1; background: #fdf6e3; overflow-y: auto; padding: 20px;
+            text-align: center; font-size: 1.2rem; line-height: 1.8; white-space: pre-wrap; 
+        }
+
+        /* --- شاشة لوحة التحكم (Control Panel) --- */
+        .panel-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #f4f7f6; z-index: 200; flex-direction: column;
+        }
+        
+        .panel-header {
+            background: #2c3e50; color: white; padding: 15px; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        
+        .panel-content {
+            padding: 20px; flex: 1; overflow-y: auto; max-width: 800px; margin: 0 auto; width: 100%;
+        }
+
+        .panel-actions {
+            display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+        }
+
+        .btn-big {
+            padding: 10px 20px; border: none; border-radius: 5px; color: white;
+            font-family: 'Cairo'; cursor: pointer; font-weight: bold; flex: 1;
+        }
+        .btn-add { background: #27ae60; }
+        .btn-return { background: #7f8c8d; }
+
+        /* قائمة الترانيم داخل لوحة التحكم */
+        .manage-list { list-style: none; padding: 0; margin: 0; }
+        .manage-item {
+            background: white; padding: 15px; border-bottom: 1px solid #ddd;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .manage-info { font-weight: bold; }
+        .manage-key {
+            display: inline-block; background: #eee; padding: 2px 8px;
+            border-radius: 4px; font-size: 0.8rem; margin-left: 10px;
+        }
+        
+        .manage-btns button {
+            margin-left: 5px; padding: 5px 10px; border: none; border-radius: 3px;
+            color: white; cursor: pointer; font-family: 'Cairo';
+        }
+        .btn-edit { background: #f39c12; }
+        .btn-delete { background: #c0392b; }
+
+        /* --- نافذة التحرير/الإضافة (Modal) --- */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 300; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .modal input, .modal textarea, .modal select {
+            padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Cairo';
+        }
+        .modal textarea { height: 120px; resize: none; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-save { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 4px; }
+        .btn-cancel { background: #ccc; border: none; padding: 8px 15px; border-radius: 4px; }
+
+        /* --- تحسينات الموبايل --- */
+        @media (max-width: 600px) {
+            .container { flex-direction: column; }
+            .col-keys { width: 100%; max-width: none; height: 50px; flex-direction: row; border-right: none; border-bottom: 2px solid #333; }
+            .key-btn { width: auto; min-width: 50px; border-bottom: none; border-left: 1px solid #ccc; padding: 0; }
+            .col-titles { width: 100%; height: 35%; border-right: none; border-bottom: 2px solid #ccc; }
+            .col-lyrics { width: 100%; height: 65%; font-size: 1rem; }
         }
     </style>
 </head>
 <body>
 
 <header>
-    تطبيق مكتبة الترانيم (Service Builder)
+    <h1>🎹 قائد الترانيم</h1>
+    <button class="control-btn" onclick="openControlPanel()">⚙️ لوحة التحكم</button>
 </header>
 
+<!-- واجهة العرض الرئيسية -->
 <div class="container">
-    <!-- العمود الأول: السلم الموسيقي -->
-    <div class="column">
-        <div class="col-header">Key</div>
-        <div class="scroll-area" id="keys-list">
-            <!-- سيتم توليد المفاتيح هنا بالجافاسكربت -->
-        </div>
+    <div class="col-keys" id="keys-list"></div>
+    <div class="col-titles">
+        <div class="col-header">العناوين</div>
+        <div id="titles-list"></div>
     </div>
-
-    <!-- العمود الثاني: عناوين الترانيم -->
-    <div class="column">
-        <div class="col-header">Title</div>
-        <div class="scroll-area" id="titles-list">
-            <div class="placeholder">اختر السلم أولاً</div>
-        </div>
+    <div class="col-lyrics" id="lyrics-view">
+        <div style="color:#999; margin-top:50px;">اختر السلم ثم الترنيمة</div>
     </div>
+</div>
 
-    <!-- العمود الثالث: الكلمات -->
-    <div class="column lyrics-col">
-        <div class="col-header">Lyrics</div>
-        <div class="scroll-area">
-            <div id="lyrics-content">
-                <div class="placeholder">اختر ترنيمة لعرض كلماتها</div>
-            </div>
+<!-- شاشة لوحة التحكم -->
+<div class="panel-overlay" id="controlPanel">
+    <div class="panel-header">
+        <h3>لوحة التحكم وإدارة الترانيم</h3>
+        <button class="btn-return" onclick="closeControlPanel()">عودة للتطبيق</button>
+    </div>
+    <div class="panel-content">
+        <div class="panel-actions">
+            <button class="btn-big btn-add" onclick="openEditModal(null)">+ إضافة ترنيمة جديدة</button>
+        </div>
+        <hr style="border:0; border-top:1px solid #ddd; margin: 15px 0;">
+        <h4>الترانيم المسجلة:</h4>
+        <ul class="manage-list" id="manageList">
+            <!-- سيتم ملء القائمة هنا -->
+        </ul>
+    </div>
+</div>
+
+<!-- نافذة التعديل/الإضافة -->
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <h3 id="modalTitle" style="margin:0">ترنيمة جديدة</h3>
+        <input type="hidden" id="editSongId">
+        <label>السلم الموسيقي:</label>
+        <select id="editSongKey"></select>
+        <label>العنوان:</label>
+        <input type="text" id="editSongTitle" placeholder="اسم الترنيمة">
+        <label>الكلمات:</label>
+        <textarea id="editSongLyrics" placeholder="كلمات الترنيمة..."></textarea>
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeEditModal()">إلغاء</button>
+            <button class="btn-save" onclick="saveSong()">حفظ</button>
         </div>
     </div>
 </div>
 
 <script>
-    // --- قاعدة البيانات (يمكنك إضافة ترانيمك هنا بسهولة) ---
-    const database = [
-        {
-            key: "Cm",
-            title: "اهديك كل المجد",
-            lyrics: `اهديك كل المجد والكرامة
-ارفع يدايا نحوك و امجد اسمك
-
-انت عظيم ليس مثلك يا رب
-تصنع العجائب تصنع العجائب
-
-انت عظيم ليس مثلك يا رب
-تستطيع كل شئ تستطيع كل شئ`
-        },
-        {
-            key: "Cm",
-            title: "بارك بلادي",
-            lyrics: `بارك بلادي واسمع صلاتي
-يا رب جينا بنحط حياتنا قدامك`
-        },
-        {
-            key: "C",
-            title: "ابانا كم نحن نحبك",
-            lyrics: `ابانا كم نحن نحبك
-نسجد لك ونعظمك`
-        },
-        {
-            key: "D",
-            title: "يسوع اسمك عظيم",
-            lyrics: `يسوع اسمك عظيم
-عجيب مشير قدير`
-        },
-        {
-            key: "Dm",
-            title: "للجالس على العرش",
-            lyrics: `للجالس على العرش وللحمل
-البركة والكرامة والمجد والسلطان`
-        },
-        {
-            key: "G",
-            title: "عظيم عظيم",
-            lyrics: `عظيم عظيم عظيم هو رب الجنود`
-        }
+    // --- البيانات ---
+    const keys = ["C", "Cm", "D", "Dm", "E", "Em", "F", "Fm", "G", "Gm", "A", "Am", "B", "Bm"];
+    const defaultSongs = [
+        { id: 1, key: "Cm", title: "اهديك كل المجد", lyrics: "اهديك كل المجد والكرامة\nارفع يدايا نحوك و امجد اسمك" },
+        { id: 2, key: "C", title: "ابانا كم نحن نحبك", lyrics: "ابانا كم نحن نحبك\nنسجد لك ونعظمك" }
     ];
 
-    // قائمة السلالم الموسيقية الثابتة (كما في الصورة)
-    const musicalKeys = ["C", "Cm", "D", "Dm", "E", "Em", "F", "Fm", "G", "Gm", "A", "Am", "B", "Bm"];
+    let songs = JSON.parse(localStorage.getItem('mySongs')) || defaultSongs;
+    let currentKey = "C";
 
-    // تعريف العناصر
-    const keysContainer = document.getElementById('keys-list');
-    const titlesContainer = document.getElementById('titles-list');
-    const lyricsContainer = document.getElementById('lyrics-content');
+    // --- العناصر ---
+    const keysList = document.getElementById('keys-list');
+    const titlesList = document.getElementById('titles-list');
+    const lyricsView = document.getElementById('lyrics-view');
+    const controlPanel = document.getElementById('controlPanel');
+    const manageList = document.getElementById('manageList');
+    const editModal = document.getElementById('editModal');
+    const keySelect = document.getElementById('editSongKey');
 
-    // 1. إنشاء أزرار المفاتيح (Keys)
-    musicalKeys.forEach(key => {
-        const btn = document.createElement('button');
-        btn.className = 'key-btn';
-        btn.innerText = key;
-        btn.onclick = () => filterSongsByKey(key, btn);
-        keysContainer.appendChild(btn);
-    });
+    // --- التهيئة ---
+    function init() {
+        keysList.innerHTML = "";
+        keySelect.innerHTML = "";
+        
+        // رسم المفاتيح
+        keys.forEach(k => {
+            const btn = document.createElement('button');
+            btn.className = `key-btn ${k === currentKey ? 'active' : ''}`;
+            btn.innerText = k;
+            btn.onclick = () => selectKey(k);
+            keysList.appendChild(btn);
 
-    // دالة تصفية الترانيم حسب المفتاح
-    function filterSongsByKey(selectedKey, clickedBtn) {
-        // تحديث شكل الزر النشط
-        document.querySelectorAll('.key-btn').forEach(b => b.classList.remove('active'));
-        clickedBtn.classList.add('active');
+            const opt = document.createElement('option');
+            opt.value = k; opt.innerText = k; keySelect.appendChild(opt);
+        });
 
-        // مسح القائمة الحالية
-        titlesContainer.innerHTML = '';
-        lyricsContainer.innerHTML = '<div class="placeholder">اختر ترنيمة لعرض الكلمات</div>';
+        renderTitles(currentKey);
+    }
 
-        // البحث عن الترانيم المناسبة
-        const filteredSongs = database.filter(song => song.key === selectedKey);
+    // --- وظائف العرض الرئيسية ---
+    function selectKey(key) {
+        currentKey = key;
+        document.querySelectorAll('.key-btn').forEach(b => {
+            b.classList.remove('active');
+            if(b.innerText === key) b.classList.add('active');
+        });
+        renderTitles(key);
+    }
 
-        if (filteredSongs.length === 0) {
-            titlesContainer.innerHTML = '<div class="placeholder" style="padding:10px">لا توجد ترانيم مسجلة لهذا السلم</div>';
+    function renderTitles(key) {
+        titlesList.innerHTML = "";
+        lyricsView.innerHTML = '<div style="color:#999; margin-top:50px;">اختر ترنيمة</div>';
+        const filtered = songs.filter(s => s.key === key);
+
+        if(filtered.length === 0) {
+            titlesList.innerHTML = '<div style="padding:10px; color:#999; font-size:0.8rem; text-align:center">لا يوجد ترانيم</div>';
             return;
         }
 
-        // إنشاء قائمة الترانيم
-        filteredSongs.forEach(song => {
+        filtered.forEach(song => {
             const div = document.createElement('div');
             div.className = 'song-item';
             div.innerText = song.title;
-            div.onclick = () => showLyrics(song, div);
-            titlesContainer.appendChild(div);
+            div.onclick = () => {
+                document.querySelectorAll('.song-item').forEach(i => i.classList.remove('active'));
+                div.classList.add('active');
+                lyricsView.innerText = song.lyrics;
+            };
+            titlesList.appendChild(div);
         });
     }
 
-    // دالة عرض الكلمات
-    function showLyrics(song, clickedDiv) {
-        // تحديث شكل الترنيمة النشطة
-        document.querySelectorAll('.song-item').forEach(i => i.classList.remove('active'));
-        clickedDiv.classList.add('active');
-
-        // عرض الكلمات
-        lyricsContainer.innerText = song.lyrics;
+    // --- وظائف لوحة التحكم ---
+    function openControlPanel() {
+        controlPanel.style.display = 'flex';
+        renderManageList();
     }
+
+    function closeControlPanel() {
+        controlPanel.style.display = 'none';
+        renderTitles(currentKey); // تحديث الواجهة الرئيسية عند العودة
+    }
+
+    function renderManageList() {
+        manageList.innerHTML = "";
+        if(songs.length === 0) {
+            manageList.innerHTML = "<p>القائمة فارغة</p>";
+            return;
+        }
+        // ترتيب الترانيم أبجديا في لوحة التحكم لسهولة البحث
+        const sortedSongs = [...songs].sort((a,b) => a.title.localeCompare(b.title));
+
+        sortedSongs.forEach(song => {
+            const li = document.createElement('li');
+            li.className = 'manage-item';
+            li.innerHTML = `
+                <div>
+                    <span class="manage-info">${song.title}</span>
+                    <span class="manage-key">${song.key}</span>
+                </div>
+                <div class="manage-btns">
+                    <button class="btn-edit" onclick="openEditModal(${song.id})">تعديل</button>
+                    <button class="btn-delete" onclick="deleteSong(${song.id})">حذف</button>
+                </div>
+            `;
+            manageList.appendChild(li);
+        });
+    }
+
+    // --- وظائف التعديل والإضافة والحذف ---
+    function openEditModal(songId) {
+        editModal.style.display = 'flex';
+        const titleField = document.getElementById('editSongTitle');
+        const lyricsField = document.getElementById('editSongLyrics');
+        const keyField = document.getElementById('editSongKey');
+        const idField = document.getElementById('editSongId');
+        const modalTitle = document.getElementById('modalTitle');
+
+        if(songId) {
+            // وضع التعديل
+            const song = songs.find(s => s.id === songId);
+            idField.value = song.id;
+            titleField.value = song.title;
+            lyricsField.value = song.lyrics;
+            keyField.value = song.key;
+            modalTitle.innerText = "تعديل الترنيمة";
+        } else {
+            // وضع الإضافة
+            idField.value = "";
+            titleField.value = "";
+            lyricsField.value = "";
+            keyField.value = currentKey;
+            modalTitle.innerText = "إضافة ترنيمة جديدة";
+        }
+    }
+
+    function closeEditModal() {
+        editModal.style.display = 'none';
+    }
+
+    function saveSong() {
+        const id = document.getElementById('editSongId').value;
+        const title = document.getElementById('editSongTitle').value;
+        const lyrics = document.getElementById('editSongLyrics').value;
+        const key = document.getElementById('editSongKey').value;
+
+        if(!title || !lyrics) { alert("أكمل البيانات"); return; }
+
+        if(id) {
+            // تحديث ترنيمة موجودة
+            const index = songs.findIndex(s => s.id == id);
+            if(index !== -1) {
+                songs[index] = { id: Number(id), title, lyrics, key };
+            }
+        } else {
+            // إضافة جديدة
+            songs.push({ id: Date.now(), title, lyrics, key });
+        }
+
+        localStorage.setItem('mySongs', JSON.stringify(songs));
+        closeEditModal();
+        renderManageList(); // تحديث القائمة في لوحة التحكم
+    }
+
+    function deleteSong(id) {
+        if(confirm("هل أنت متأكد من الحذف؟")) {
+            songs = songs.filter(s => s.id !== id);
+            localStorage.setItem('mySongs', JSON.stringify(songs));
+            renderManageList();
+        }
+    }
+
+    init();
 </script>
 
 </body>
 </html>
+```
