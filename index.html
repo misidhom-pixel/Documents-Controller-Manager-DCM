@@ -1,22 +1,10 @@
-
-كود النسخة السابقة **لم يكن يحتوي** على "لوحة تحكم" مركزية (كان يحتوي فقط على زر إضافة وزر حذف صغير).
-
-بناءً على طلبك، قمت بتطوير الكود جذرياً. الآن:
-1.  يوجد زر **"⚙️ لوحة التحكم"** في الأعلى.
-2.  عند الضغط عليه، تفتح شاشة كاملة تحتوي على:
-    *   **زر إضافة ترنيمة جديدة.**
-    *   **قائمة بكل الترانيم** (مع زر **تعديل** وزر **حذف** بجانب كل ترنيمة).
-    *   **زر عودة للتطبيق.**
-
-هذا هو الكود النهائي والكامل (انسخه واحفظه):
-
-```html
+html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تطبيق الترانيم (لوحة التحكم)</title>
+    <title>قائد الترانيم</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
 
@@ -71,17 +59,17 @@
         }
         .control-btn:hover { background-color: #46637f; }
 
-        /* --- الحاوية الرئيسية (معكوسة للكمبيوتر) --- */
+        /* --- الحاوية الرئيسية --- */
         .container {
             display: flex;
             height: calc(100vh - var(--header-h));
             overflow: hidden;
-            flex-direction: row-reverse; /* عكس الأعمدة كما طلبت */
+            flex-direction: row-reverse; /* عكس الأعمدة للكمبيوتر */
         }
 
         /* --- الأعمدة --- */
         
-        /* 1. عمود المفاتيح (يسار) */
+        /* 1. عمود المفاتيح (يسار الشاشة الكبيرة) */
         .col-keys {
             width: 15%; min-width: 60px; max-width: 100px;
             background: #e0e0e0; border-right: 1px solid #ccc;
@@ -424,4 +412,3 @@
 
 </body>
 </html>
-```
