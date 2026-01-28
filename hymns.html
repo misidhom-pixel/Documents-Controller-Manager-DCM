@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2c3e50">
+    <title>Scales</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        :root { --primary: #2c3e50; --accent: #e74c3c; --bg-light: #f4f7f6; --header-h: 60px; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; margin: 0; padding: 0; background-color: var(--bg-light); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        header { background-color: var(--primary); color: white; height: var(--header-h); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 100; }
+        .header-info { display: flex; flex-direction: column; justify-content: center; }
+        header h1 { font-size: 1rem; margin: 0; line-height: 1.2; }
+        .total-badge { font-size: 0.75rem; color: #bdc3c7; font-weight: normal; }
+        .header-btns { display: flex; gap: 8px; }
+        .header-btn { background-color: #34495e; border: 1px solid #5d6d7e; color: white; padding: 5px 10px; border-radius: 5px; font-family: 'Cairo', sans-serif; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; height: 35px; }
+        .container { display: flex; height: calc(100vh - var(--header-h)); overflow: hidden; flex-direction: row-reverse; }
+        .col-keys { width: 18%; min-width: 70px; max-width: 110px; background: #e0e0e0; border-right: 1px solid #ccc; overflow-y: auto; display: flex; flex-direction: column; }
+        .key-btn { padding: 10px 5px; text-align: center; background: none; border: none; border-bottom: 1px solid #ccc; font-weight: bold; font-size: 1rem; width: 100%; cursor: pointer; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .key-btn span.key-name { font-size: 1.1rem; }
+        .key-btn span.key-count { font-size: 0.7rem; color: #666; background: rgba(255,255,255,0.5); padding: 1px 6px; border-radius: 10px; margin-top: 2px; }
+        .key-btn.active { background-color: var(--accent); color: white; }
+        .key-btn.active span.key-count { color: var(--accent); background: white; }
+        .col-titles { width: 32%; background: #fff; border-right: 1px solid #ccc; overflow-y: auto; }
+        .col-header { background: #dcdde1; padding: 8px; text-align: center; font-weight: bold; position: sticky; top: 0; border-bottom: 1px solid #aaa; }
+        .song-item { padding: 12px 10px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 0.95rem; text-align: right; }
+        .song-item:hover { background-color: #f9f9f9; }
+        .song-item.active { background-color: #fadbd8; color: #c0392b; font-weight: bold; }
+        .col-lyrics { flex: 1; background: #fdf6e3; overflow-y: auto; padding: 20px; text-align: center; font-size: 1.2rem; line-height: 1.8; white-space: pre-wrap; }
+        .panel-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f6; z-index: 200; flex-direction: column; }
+        .panel-header { background: #2c3e50; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .panel-content { padding: 20px; flex: 1; overflow-y: auto; max-width: 800px; margin: 0 auto; width: 100%; }
+        .btn-big { padding: 10px 20px; border: none; border-radius: 5px; color: white; font-family: 'Cairo'; cursor: pointer; font-weight: bold; flex: 1; }
+        .btn-add { background: #27ae60; width: 100%; }
+        .search-input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ccc; border-radius: 6px; font-family: 'Cairo'; font-size: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .manage-list { list-style: none; padding: 0; margin: 0; }
+        .manage-item { background: white; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        .manage-key { background: #eee; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-left: 10px; }
+        .manage-btns button { margin-left: 5px; padding: 5px 10px; border: none; border-radius: 3px; color: white; cursor: pointer; font-family: 'Cairo'; }
+        .btn-edit { background: #f39c12; }
+        .btn-delete { background: #c0392b; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+        .modal input, .modal textarea, .modal select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Cairo'; }
+        .modal textarea { height: 120px; resize: none; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-save { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 4px; }
+        .btn-cancel { background: #ccc; border: none; padding: 8px 15px; border-radius: 4px; }
+        @media (max-width: 600px) {
+            .container { flex-direction: column; }
+            .col-keys { width: 100%; max-width: none; height: 60px; flex-direction: row; border-right: none; border-bottom: 2px solid #333; }
+            .key-btn { width: auto; min-width: 60px; border-bottom: none; border-left: 1px solid #ccc; padding: 5px; }
+            .col-titles { width: 100%; height: 35%; border-right: none; border-bottom: 2px solid #ccc; }
+            .col-lyrics { width: 100%; height: 65%; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-info">
+        <h1>🎹  Scales</h1>
+        <span class="total-badge" id="totalCountDisplay">الإجمالي: 0</span>
+    </div>
+    <div class="header-btns">
+        <button class="header-btn" onclick="toggleFullScreen()">⛶</button>
+        <button class="header-btn" onclick="openControlPanel()">⚙️</button>
+    </div>
+</header>
+<div class="container">
+    <div class="col-keys" id="keys-list"></div>
+    <div class="col-titles">
+        <div class="col-header">العناوين</div>
+        <div id="titles-list"></div>
+    </div>
+    <div class="col-lyrics" id="lyrics-view">
+        <div style="color:#999; margin-top:50px;">اختر السلم ثم الترنيمة</div>
+    </div>
+</div>
+<div class="panel-overlay" id="controlPanel">
+    <div class="panel-header">
+        <h3>إدارة الترانيم</h3>
+        <button class="header-btn" onclick="closeControlPanel()">عودة</button>
+    </div>
+    <div class="panel-content">
+        <button class="btn-big btn-add" onclick="openEditModal(null)">+ إضافة ترنيمة جديدة</button>
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 بحث عن ترنيمة..." onkeyup="searchSongs()">
+        <hr style="border:0; border-top:1px solid #ddd; margin: 15px 0;">
+        <ul class="manage-list" id="manageList"></ul>
+    </div>
+</div>
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <h3 id="modalTitle" style="margin:0">ترنيمة جديدة</h3>
+        <input type="hidden" id="editSongId">
+        <label>السلم:</label>
+        <select id="editSongKey"></select>
+        <label>العنوان:</label>
+        <input type="text" id="editSongTitle" placeholder="اسم الترنيمة">
+        <label>الكلمات:</label>
+        <textarea id="editSongLyrics" placeholder="كلمات الترنيمة..."></textarea>
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeEditModal()">إلغاء</button>
+            <button class="btn-save" onclick="saveSong()">حفظ</button>
+        </div>
+    </div>
+</div>
+<script>
+    if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err)); }); }
+    function toggleFullScreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => alert(`Error: ${err.message}`)); } else { if (document.exitFullscreen) document.exitFullscreen(); } }
+    const keys = ["C", "Cm", "D", "Dm", "E", "Em", "F", "Fm", "G", "Gm", "A", "Am", "B", "Bm"];
+    const defaultSongs = [{ id: 1, key: "Cm", title: "اهديك كل المجد", lyrics: "اهديك كل المجد والكرامة\nارفع يدايا نحوك و امجد اسمك" }, { id: 2, key: "C", title: "ابانا كم نحن نحبك", lyrics: "ابانا كم نحن نحبك\nنسجد لك ونعظمك" }];
+    let songs = JSON.parse(localStorage.getItem('mySongs')) || defaultSongs;
+    let currentKey = "C";
+    const keysList = document.getElementById('keys-list');
+    const titlesList = document.getElementById('titles-list');
+    const lyricsView = document.getElementById('lyrics-view');
+    const totalCountDisplay = document.getElementById('totalCountDisplay');
+    const controlPanel = document.getElementById('controlPanel');
+    const manageList = document.getElementById('manageList');
+    const editModal = document.getElementById('editModal');
+    const keySelect = document.getElementById('editSongKey');
+    const searchInput = document.getElementById('searchInput');
+    function init() { keySelect.innerHTML = ""; keys.forEach(k => { const opt = document.createElement('option'); opt.value = k; opt.innerText = k; keySelect.appendChild(opt); }); renderKeys(); renderTitles(currentKey); updateTotalCount(); }
+    function renderKeys() { keysList.innerHTML = ""; keys.forEach(k => { const count = songs.filter(s => s.key === k).length; const btn = document.createElement('button'); btn.className = `key-btn ${k === currentKey ? 'active' : ''}`; btn.innerHTML = `<span class="key-name">${k}</span><span class="key-count">${count}</span>`; btn.onclick = () => selectKey(k); keysList.appendChild(btn); }); }
+    function updateTotalCount() { totalCountDisplay.innerText = `الإجمالي: ${songs.length} ترنيمة`; }
+    function selectKey(key) { currentKey = key; renderKeys(); renderTitles(key); }
+    
+    // --- دالة عرض العناوين (تم تعديلها للترتيب الأبجدي) ---
+    function renderTitles(key) { 
+        titlesList.innerHTML = ""; 
+        lyricsView.innerHTML = '<div style="color:#999; margin-top:50px;">اختر ترنيمة</div>'; 
+        const filtered = songs.filter(s => s.key === key); 
+        
+        // الترتيب الأبجدي
+        filtered.sort((a, b) => a.title.localeCompare(b.title));
+
+        if(filtered.length === 0) { 
+            titlesList.innerHTML = '<div style="padding:10px; color:#999; font-size:0.8rem; text-align:center">لا يوجد ترانيم</div>'; 
+            return; 
+        } 
+        filtered.forEach(song => { 
+            const div = document.createElement('div'); 
+            div.className = 'song-item'; 
+            div.innerText = song.title; 
+            div.onclick = () => { 
+                document.querySelectorAll('.song-item').forEach(i => i.classList.remove('active')); 
+                div.classList.add('active'); 
+                lyricsView.innerText = song.lyrics; 
+            }; 
+            titlesList.appendChild(div); 
+        }); 
+    }
+
+    function openControlPanel() { controlPanel.style.display = 'flex'; searchInput.value = ''; renderManageList(songs); }
+    function closeControlPanel() { controlPanel.style.display = 'none'; renderTitles(currentKey); renderKeys(); updateTotalCount(); }
+    function searchSongs() { const query = searchInput.value.toLowerCase(); const filteredSongs = songs.filter(s => s.title.toLowerCase().includes(query)); renderManageList(filteredSongs); }
+    function renderManageList(dataSource = songs) { manageList.innerHTML = ""; if(dataSource.length === 0) { manageList.innerHTML = "<p style='text-align:center; color:#888;'>لا توجد نتائج</p>"; return; } const sortedSongs = [...dataSource].sort((a,b) => a.title.localeCompare(b.title)); sortedSongs.forEach(song => { const li = document.createElement('li'); li.className = 'manage-item'; li.innerHTML = `<div><span class="manage-info">${song.title}</span><span class="manage-key">${song.key}</span></div><div class="manage-btns"><button class="btn-edit" onclick="openEditModal(${song.id})">تعديل</button><button class="btn-delete" onclick="deleteSong(${song.id})">حذف</button></div>`; manageList.appendChild(li); }); }
+    function openEditModal(songId) { editModal.style.display = 'flex'; const titleField = document.getElementById('editSongTitle'); const lyricsField = document.getElementById('editSongLyrics'); const keyField = document.getElementById('editSongKey'); const idField = document.getElementById('editSongId'); const modalTitle = document.getElementById('modalTitle'); if(songId) { const song = songs.find(s => s.id === songId); idField.value = song.id; titleField.value = song.title; lyricsField.value = song.lyrics; keyField.value = song.key; modalTitle.innerText = "تعديل الترنيمة"; } else { idField.value = ""; titleField.value = ""; lyricsField.value = ""; keyField.value = currentKey; modalTitle.innerText = "إضافة ترنيمة جديدة"; } }
+    function closeEditModal() { editModal.style.display = 'none'; }
+    function saveSong() { const id = document.getElementById('editSongId').value; const title = document.getElementById('editSongTitle').value; const lyrics = document.getElementById('editSongLyrics').value; const key = document.getElementById('editSongKey').value; if(!title || !lyrics) { alert("أكمل البيانات"); return; } if(id) { const index = songs.findIndex(s => s.id == id); if(index !== -1) songs[index] = { id: Number(id), title, lyrics, key }; } else { songs.push({ id: Date.now(), title, lyrics, key }); } localStorage.setItem('mySongs', JSON.stringify(songs)); closeEditModal(); searchInput.value = ''; renderManageList(songs); updateTotalCount(); renderKeys(); }
+    function deleteSong(id) { if(confirm("هل أنت متأكد من الحذف؟")) { songs = songs.filter(s => s.id !== id); localStorage.setItem('mySongs', JSON.stringify(songs)); searchSongs(); updateTotalCount(); renderKeys(); } }
+    init();
+</script>
+</body>
+</html>
