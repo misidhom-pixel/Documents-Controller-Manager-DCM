@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مستخرج التقارير المعتمد - V6.0 Final Fix</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <style>
+        body { background-color: #f4f7fa; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .main-card { border: none; border-radius: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        .excel-window { background: #fff; border-radius: 8px; border: 1px solid #aaa; margin-top: 20px; }
+        .scroll-area { max-height: 650px; overflow: auto; width: 100%; }
+        .excel-table { width: auto; min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; table-layout: auto; }
+        .master-header-row { background: #cbd5e1 !important; color: #1e293b; font-weight: 800; text-align: center; font-size: 16px; border: 1px solid #999; padding: 12px; }
+        .excel-table th { background: #217346 !important; color: white; padding: 10px; border: 1px solid #1a5c38; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 30; }
+        .excel-table td { padding: 8px 12px; border: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db; text-align: center; color: #333; vertical-align: middle; white-space: nowrap; }
+        .subject-column { white-space: pre-wrap !important; min-width: 350px; max-width: 500px; text-align: right !important; }
+        #progressOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 10000; display: none; justify-content: center; align-items: center; flex-direction: column; }
+        .loader-box { width: 350px; text-align: center; background: white; padding: 25px; border-radius: 15px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+<div id="progressOverlay">
+    <div class="loader-box shadow-lg">
+        <div class="spinner-border text-success mb-3" role="status"></div>
+        <h5 id="opTitle" class="fw-bold">جاري معالجة البيانات...</h5>
+        <div class="progress mt-3"><div id="progressBar" class="progress-bar bg-success" style="width: 0%"></div></div>
+        <div id="progressPct" class="mt-2 fw-bold text-success">0%</div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <div class="card main-card p-4 mb-4">
+        <h4 class="fw-bold mb-4 text-center text-success"><i class="bi bi-shield-check-fill"></i> مستخرج تقارير DCS - الإصدار النهائي المطور</h4>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5"><label class="form-label fw-bold small">1. ملفات الإكسيل:</label><input type="file" id="excelFiles" class="form-control shadow-sm" accept=".xlsx, .xls" multiple></div>
+            <div class="col-md-4"><label class="form-label fw-bold small">2. قيمة الكود (مثل A أو OPEN):</label><input type="text" id="filterValue" class="form-control shadow-sm" placeholder="ادخل القيمة"></div>
+            <div class="col-md-3"><button onclick="startProcessing()" class="btn btn-success w-100 fw-bold py-2 shadow-sm">توليد التقرير</button></div>
+        </div>
+    </div>
+
+    <div class="d-none" id="resultCard">
+        <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+            <span class="fw-bold small">إجمالي السجلات: <span id="totalMatches" class="badge bg-dark">0</span></span>
+            <div class="d-flex gap-2">
+                <button onclick="exportFullExcel()" class="btn btn-sm btn-outline-success fw-bold px-3">Excel</button>
+                <button onclick="exportFullPDF()" class="btn btn-sm btn-danger fw-bold shadow-sm px-3">تصدير PDF عالي الجودة</button>
+            </div>
+        </div>
+        <div class="excel-window"><div class="scroll-area" id="mainDisplayArea"></div></div>
+    </div>
+</div>
+
+<script>
+    let allData = []; 
+    let userFilter = "";
+    // الترتيب الصارم للأعمدة
+    const finalHeaders = ["رقم الطلب", "الإصدار", "كلاستر", "الموضوع", "تاريخ الاستلام", "تاريخ الرد", "الكود", "مهندس ECG"];
+
+    // دالة البحث عن القيمة في العمود مهما كان مسمى الرأس
+    function getValueByKeyMatches(row, headerName) {
+        const keys = Object.keys(row);
+        let foundKey = keys.find(k => {
+            let cleanK = k.toString().toLowerCase().trim();
+            let target = headerName.toLowerCase();
+
+            if (target === "الإصدار") {
+                return cleanK === "الإصدار" || cleanK === "إصدار" || cleanK === "rev" || cleanK === "revision" || cleanK === "issue" || cleanK === "v" || cleanK === "ver";
+            }
+            if (target === "رقم الطلب") {
+                return cleanK.includes("طلب") || cleanK.includes("request") || cleanK.includes("code") || cleanK.includes("ref");
+            }
+            if (target === "مهندس ecg") {
+                return cleanK.includes("ecg") || cleanK.includes("مهندس") || cleanK.includes("engineer");
+            }
+            return cleanK.includes(target);
+        });
+
+        let value = foundKey !== undefined ? row[foundKey] : "";
+        // التأكد من أن قيمة 0 تظهر كنص ولا تختفي
+        return (value === 0 || value === "0") ? "0" : value;
+    }
+
+    function getTodayDate() {
+        const today = new Date();
+        return `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+    }
+
+    function formatExcelDate(val) {
+        if (!val) return "";
+        if (typeof val === 'number' && val > 30000) {
+            let dateObj = XLSX.SSF.parse_date_code(val);
+            return `${String(dateObj.d).padStart(2, '0')}-${String(dateObj.m).padStart(2, '0')}-${dateObj.y}`;
+        }
+        let timestamp = Date.parse(String(val).trim());
+        if (isNaN(timestamp)) return val;
+        let d = new Date(timestamp);
+        return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+    }
+
+    async function startProcessing() {
+        const fileInput = document.getElementById('excelFiles');
+        userFilter = document.getElementById('filterValue').value.trim().toUpperCase();
+        if (!fileInput.files.length || !userFilter) return alert("الرجاء إكمال البيانات.");
+
+        allData = [];
+        document.getElementById('progressOverlay').style.display = 'flex';
+        document.getElementById('resultCard').classList.add('d-none');
+
+        const files = Array.from(fileInput.files);
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            updateUI(Math.round(((i + 1) / files.length) * 100), "جاري تحليل: " + file.name);
+            
+            const docType = file.name.split(/[\s\-_]/)[0].toUpperCase();
+            const company = file.name.toUpperCase().includes("EGC") ? "EGC" : "المقاول العام";
+
+            try {
+                const buffer = await file.arrayBuffer();
+                const wb = XLSX.read(buffer, { type: 'array' });
+                wb.SheetNames.forEach(shName => {
+                    const ws = wb.Sheets[shName];
+                    const json = XLSX.utils.sheet_to_json(ws, { defval: "" });
+                    json.forEach(row => {
+                        const codeVal = getValueByKeyMatches(row, "الكود");
+                        if (String(codeVal).toUpperCase().trim() === userFilter) {
+                            const cleanedRow = { "_docType": docType, "_company": company };
+                            finalHeaders.forEach(header => {
+                                let val = getValueByKeyMatches(row, header);
+                                cleanedRow[header] = (header.includes("تاريخ")) ? formatExcelDate(val) : val;
+                            });
+                            allData.push(cleanedRow);
+                        }
+                    });
+                });
+            } catch (e) { console.error(e); }
+            await new Promise(r => setTimeout(r, 5));
+        }
+        document.getElementById('progressOverlay').style.display = 'none';
+        if (allData.length > 0) displayOnScreen();
+        else alert("لا توجد نتائج مطابقة.");
+    }
+
+    function displayOnScreen() {
+        document.getElementById('resultCard').classList.remove('d-none');
+        document.getElementById('totalMatches').innerText = allData.length;
+        const mainDisplay = document.getElementById('mainDisplayArea');
+        mainDisplay.innerHTML = "";
+        const grouped = groupData(allData);
+        for (let groupKey in grouped) {
+            mainDisplay.insertAdjacentHTML('beforeend', generateTableHTML(groupKey, grouped[groupKey], false));
+        }
+    }
+
+    async function exportFullPDF() {
+        const filterVal = document.getElementById('filterValue').value.trim();
+        const fileName = `HD_Structured_Report_${filterVal}_${getTodayDate()}.pdf`;
+        updateUI(50, "جاري تحسين جودة الصورة وتوليد PDF...");
+        document.getElementById('progressOverlay').style.display = 'flex';
+
+        const grouped = groupData(allData);
+        const groupKeys = Object.keys(grouped);
+        
+        const opt = {
+            margin: 8,
+            filename: fileName,
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+            jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' }
+        };
+
+        let worker = html2pdf().set(opt).from(generateTableHTML(groupKeys[0], grouped[groupKeys[0]], true));
+        for (let i = 1; i < groupKeys.length; i++) {
+            const tableHtml = generateTableHTML(groupKeys[i], grouped[groupKeys[i]], true);
+            worker = worker.toPdf().get('pdf').then(function (pdf) { pdf.addPage(); }).from(tableHtml).toContainer().toCanvas().toImg().toPdf();
+        }
+        worker.save().then(() => { document.getElementById('progressOverlay').style.display = 'none'; });
+    }
+
+    function groupData(data) {
+        return data.reduce((acc, row) => {
+            const groupKey = `${row._company} - ${row._docType}`;
+            if (!acc[groupKey]) acc[groupKey] = [];
+            acc[groupKey].push(row);
+            return acc;
+        }, {});
+    }
+
+    function generateTableHTML(groupKey, rows, isForPDF) {
+        const todayStr = getTodayDate();
+        rows.sort((a,b) => String(a["رقم الطلب"]).localeCompare(String(b["رقم الطلب"])));
+        const fSize = isForPDF ? "15px" : "12px";
+        const pVal = isForPDF ? "12px" : "8px";
+
+        let html = `
+            <div dir="rtl" style="padding: 10px; background: #fff; font-family: sans-serif;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                <thead>
+                    <tr>
+                        <td colspan="${finalHeaders.length + 1}" style="background: #cbd5e1; color: #1e293b; font-weight: bold; text-align: center; padding: ${pVal}; font-size: 18px; border: 2px solid #000;">
+                            ${groupKey} - ${userFilter} - ${todayStr}
+                        </td>
+                    </tr>
+                    <tr style="background: #217346; color: white;">
+                        <th style="border: 2px solid #000; padding: ${pVal}; width: 60px; font-size: ${fSize};">#</th>
+                        ${finalHeaders.map(h => {
+                            let w = (h === "الموضوع") ? "500px" : "auto";
+                            return `<th style="border: 2px solid #000; padding: ${pVal}; width: ${w}; font-size: ${fSize}; text-align: center;">${h}</th>`;
+                        }).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        rows.forEach((row, index) => {
+            html += `<tr><td style="border: 2px solid #000; padding: ${pVal}; font-weight: bold; text-align: center; font-size: ${fSize}; background:#f8f9fa;">${index + 1}</td>`;
+            finalHeaders.forEach(h => {
+                const isSub = h === "الموضوع";
+                const align = isSub ? 'right' : 'center';
+                const wrap = isSub ? 'pre-wrap' : 'nowrap';
+                html += `<td style="border: 2px solid #000; padding: ${pVal}; font-size: ${fSize}; text-align: ${align}; white-space: ${wrap}; vertical-align: middle;">${row[h]}</td>`;
+            });
+            html += `</tr>`;
+        });
+        return html + `</tbody></table></div>`;
+    }
+
+    function exportFullExcel() {
+        const exportData = allData.map(r => { const { _docType, _company, ...clean } = r; return clean; });
+        const ws = XLSX.utils.json_to_sheet(exportData, { header: finalHeaders });
+        ws['!cols'] = finalHeaders.map(h => ({ wch: h === "الموضوع" ? 60 : 25 }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Report");
+        wb.Workbook = { Views: [{ RTL: true }] };
+        XLSX.writeFile(wb, `Structured_Report_${userFilter}_${getTodayDate()}.xlsx`);
+    }
+
+    function updateUI(pct, msg) {
+        document.getElementById('progressBar').style.width = pct + '%';
+        document.getElementById('progressPct').innerText = pct + '%';
+        document.getElementById('opTitle').innerText = msg;
+    }
+</script>
+
+</body>
+</html>
