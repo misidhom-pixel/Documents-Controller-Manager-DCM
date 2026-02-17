@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مستخرج التقارير المعتمد - طباعة A4 Landscape</title>
+    <title>مستخرج التقارير الاحترافي - نسخة البيانات الضخمة</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -11,75 +11,57 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
     <style>
-        body { background-color: #f4f7fa; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .main-card { border: none; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        body { background-color: #f4f7fa; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+        .main-card { border: none; border-radius: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
         .excel-window { background: #fff; border-radius: 8px; border: 1px solid #aaa; margin-top: 20px; }
-        .scroll-area { max-height: 600px; overflow: auto; width: 100%; }
-        
-        /* تصميم الجدول على الشاشة */
-        .excel-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .scroll-area { max-height: 500px; overflow: auto; width: 100%; }
+        .excel-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 11px; table-layout: auto; }
         .master-header-row { background: #cbd5e1 !important; color: #1e293b; font-weight: 800; text-align: center; font-size: 15px; border: 1px solid #999; padding: 10px; }
         .excel-table th { background: #217346 !important; color: white; padding: 8px; border: 1px solid #1a5c38; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 30; }
-        .excel-table td { padding: 6px; border: 1px solid #d1d5db; text-align: center; color: #333; vertical-align: middle; }
-        .subject-column { white-space: pre-wrap !important; text-align: right !important; }
-        
+        .excel-table td { padding: 6px; border: 1px solid #d1d5db; text-align: center; color: #333; vertical-align: middle; white-space: nowrap; text-rendering: optimizeLegibility; }
+        .subject-column { white-space: pre-wrap !important; min-width: 300px; max-width: 500px; text-align: right !important; unicode-bidi: plaintext; }
         #progressOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 10000; display: none; justify-content: center; align-items: center; flex-direction: column; }
-        .loader-box { width: 350px; text-align: center; background: white; padding: 25px; border-radius: 15px; border: 1px solid #ddd; }
-        
-        .page-break { page-break-after: always; }
+        .loader-box { width: 400px; text-align: center; background: white; padding: 30px; border-radius: 15px; border: 1px solid #ddd; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
 <div id="progressOverlay">
-    <div class="loader-box shadow-lg">
-        <div class="spinner-border text-success mb-3" role="status"></div>
-        <h5 id="opTitle" class="fw-bold text-dark">جاري معالجة البيانات...</h5>
-        <div class="progress mt-3"><div id="progressBar" class="progress-bar bg-success" style="width: 0%"></div></div>
+    <div class="loader-box">
+        <div class="spinner-border text-success mb-3" style="width: 3rem; height: 3rem;"></div>
+        <h5 id="opTitle" class="fw-bold">جاري معالجة البيانات...</h5>
+        <p id="opSubTitle" class="text-muted small"></p>
+        <div class="progress mt-3"><div id="progressBar" class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width: 0%"></div></div>
         <div id="progressPct" class="mt-2 fw-bold text-success">0%</div>
     </div>
 </div>
 
 <div class="container py-4">
     <div class="card main-card p-4 mb-4">
-        <h4 class="fw-bold mb-4 text-center text-success"><i class="bi bi-printer-fill"></i> نظام التقارير - متوافق تماماً مع A4 Landscape</h4>
-        
+        <h4 class="fw-bold mb-4 text-center text-success"><i class="bi bi- lightning-charge"></i> محرك التقارير الذكي (دعم +1000 سطر)</h4>
         <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-                <label class="form-label fw-bold small">1. ملفات الإكسيل:</label>
-                <input type="file" id="excelFiles" class="form-control shadow-sm" accept=".xlsx, .xls" multiple>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label fw-bold small">2. كود الحالة (مثلاً: OPEN):</label>
-                <input type="text" id="filterValue" class="form-control shadow-sm" placeholder="ادخل القيمة">
-            </div>
-            <div class="col-md-3">
-                <button onclick="startProcessing()" class="btn btn-success w-100 fw-bold py-2 shadow-sm">توليد التقرير</button>
-            </div>
+            <div class="col-md-5"><label class="form-label fw-bold small">1. ملفات الإكسيل:</label><input type="file" id="excelFiles" class="form-control shadow-sm" accept=".xlsx, .xls" multiple></div>
+            <div class="col-md-4"><label class="form-label fw-bold small">2. كود الحالة (مثلاً OPEN):</label><input type="text" id="filterValue" class="form-control shadow-sm" placeholder="ادخل القيمة"></div>
+            <div class="col-md-3"><button onclick="startProcessing()" class="btn btn-success w-100 fw-bold py-2 shadow-sm">بدء المعالجة</button></div>
         </div>
     </div>
 
     <div class="d-none" id="resultCard">
         <div class="d-flex justify-content-between align-items-center mb-2 px-2">
-            <span class="fw-bold small">النتائج: <span id="totalMatches" class="badge bg-dark">0</span></span>
+            <span class="fw-bold small">النتائج المطابقة: <span id="totalMatches" class="badge bg-dark">0</span></span>
             <div class="d-flex gap-2">
-                <button onclick="exportFullExcel()" class="btn btn-sm btn-outline-success fw-bold px-3">تصدير Excel</button>
-                <button onclick="exportFullPDF()" class="btn btn-sm btn-danger fw-bold shadow-sm px-3">
-                    <i class="bi bi-file-pdf"></i> تصدير PDF (A4 Landscape)
-                </button>
+                <button onclick="exportFullExcel()" class="btn btn-sm btn-outline-success fw-bold">تصدير Excel</button>
+                <button onclick="exportFullPDF()" class="btn btn-sm btn-danger fw-bold shadow-sm">تصدير PDF كامل</button>
             </div>
         </div>
-
-        <div class="excel-window">
-            <div class="scroll-area" id="mainDisplayArea"></div>
-        </div>
+        <div class="excel-window"><div class="scroll-area" id="mainDisplayArea"></div></div>
     </div>
 </div>
 
 <script>
     let allData = []; 
     let userFilter = "";
-    const finalHeaders = ["رقم الطلب", "الإصدار", "كلاستر", "الموضوع", "تاريخ الاستلام", "تاريخ الرد", "الكود", "مهندس ECG"];
+    const finalHeaders = ["رقم الطلب", "REV", "CL", "الموضوع", "تاريخ الاستلام", "تاريخ الرد", "الكود", "مهندس ECG"];
 
     function getTodayDate() {
         const today = new Date();
@@ -88,24 +70,21 @@
 
     function formatExcelDate(val) {
         if (!val) return "";
-        let d, m, y;
         if (typeof val === 'number' && val > 30000) {
-            let dateObj = XLSX.SSF.parse_date_code(val);
-            d = String(dateObj.d).padStart(2, '0'); m = String(dateObj.m).padStart(2, '0'); y = dateObj.y;
-        } else {
-            let dateStr = String(val).trim();
-            let timestamp = Date.parse(dateStr);
-            if (isNaN(timestamp)) return dateStr;
-            let dateObj = new Date(timestamp);
-            d = String(dateObj.getDate()).padStart(2, '0'); m = String(dateObj.getMonth() + 1).padStart(2, '0'); y = dateObj.getFullYear();
+            let dObj = XLSX.SSF.parse_date_code(val);
+            return `${String(dObj.d).padStart(2,'0')}-${String(dObj.m).padStart(2,'0')}-${dObj.y}`;
         }
-        return `${d}-${m}-${y}`;
+        let dateStr = String(val).trim();
+        let timestamp = Date.parse(dateStr);
+        if (isNaN(timestamp)) return dateStr;
+        let d = new Date(timestamp);
+        return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
     }
 
     async function startProcessing() {
         const fileInput = document.getElementById('excelFiles');
         userFilter = document.getElementById('filterValue').value.trim().toUpperCase();
-        if (!fileInput.files.length || !userFilter) return alert("الرجاء إكمال البيانات.");
+        if (!fileInput.files.length || !userFilter) return alert("اكمل البيانات");
 
         allData = [];
         document.getElementById('progressOverlay').style.display = 'flex';
@@ -114,153 +93,144 @@
         const files = Array.from(fileInput.files);
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            updateUI(Math.round(((i + 1) / files.length) * 100), "تحليل: " + file.name);
+            updateUI(Math.round(((i + 1) / files.length) * 100), "جاري فحص: " + file.name);
+            
             const docType = file.name.split(/[\s\-_]/)[0].toUpperCase();
             const company = file.name.toUpperCase().includes("EGC") ? "EGC" : "المقاول العام";
 
             try {
                 const buffer = await file.arrayBuffer();
                 const wb = XLSX.read(buffer, { type: 'array' });
-                wb.SheetNames.forEach(shName => {
+                
+                for (let shName of wb.SheetNames) {
                     const ws = wb.Sheets[shName];
-                    const json = XLSX.utils.sheet_to_json(ws, { defval: "" });
-                    json.forEach(row => {
-                        const codeKey = Object.keys(row).find(k => {
-                            const key = String(k).toLowerCase();
-                            return key.includes("كود") || key.includes("code") || key.includes("status");
-                        });
-                        if (codeKey && String(row[codeKey]).toUpperCase().trim() === userFilter) {
-                            const cleanedRow = { "_docType": docType, "_company": company };
-                            finalHeaders.forEach(header => {
-                                let foundKey = Object.keys(row).find(rk => {
-                                    let k = String(rk).trim().toLowerCase();
-                                    let h = header.toLowerCase();
-                                    if(h === "الإصدار") return k === "إصدار" || k === "الإصدار" || k === "rev" || k === "revision";
-                                    return k.includes(h);
-                                });
-                                let value = foundKey ? row[foundKey] : "";
-                                cleanedRow[header] = (header.includes("تاريخ")) ? formatExcelDate(value) : (value === 0 ? "0" : value);
+                    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+                    if (rows.length < 2) continue;
+
+                    const headers = rows[0].map(h => String(h || "").trim().toLowerCase());
+                    let iReq = headers.findIndex(h => h.includes("طلب") || h.includes("code"));
+                    let iRev = headers.findIndex(h => h === "rev" || h.includes("إصدار"));
+                    if (iRev === -1 && iReq !== -1) iRev = iReq + 1;
+                    let iCL = headers.findIndex(h => h === "cl" || h.includes("كلاستر"));
+                    if (iCL === -1 && iRev !== -1) iCL = iRev + 1;
+                    let iSub = headers.findIndex(h => h.includes("موضوع") || h.includes("subject"));
+                    let iDIn = headers.findIndex(h => h.includes("استلام") || (h.includes("تاريخ") && !h.includes("رد")));
+                    let iDOut = headers.findIndex(h => h.includes("رد"));
+                    let iStat = headers.findIndex(h => h.includes("كود") || h === "status");
+                    let iEcg = headers.findIndex(h => h.includes("ecg") || h.includes("مهندس"));
+
+                    // معالجة السطور على دفعات لتجنب التهنيج
+                    for (let r = 1; r < rows.length; r++) {
+                        const row = rows[r];
+                        const codeVal = iStat !== -1 ? String(row[iStat]).toUpperCase().trim() : "";
+                        if (codeVal === userFilter) {
+                            allData.push({
+                                "_docType": docType, "_company": company,
+                                "رقم الطلب": iReq !== -1 ? row[iReq] : "",
+                                "REV": iRev !== -1 ? (row[iRev] === 0 || row[iRev] === "0" ? "0" : row[iRev]) : "",
+                                "CL": iCL !== -1 ? row[iCL] : "",
+                                "الموضوع": iSub !== -1 ? row[iSub] : "",
+                                "تاريخ الاستلام": iDIn !== -1 ? formatExcelDate(row[iDIn]) : "",
+                                "تاريخ الرد": iDOut !== -1 ? formatExcelDate(row[iDOut]) : "",
+                                "الكود": userFilter, "مهندس ECG": iEcg !== -1 ? row[iEcg] : ""
                             });
-                            allData.push(cleanedRow);
                         }
-                    });
-                });
-            } catch (e) {}
-            await new Promise(r => setTimeout(r, 5));
+                        // كل 200 سطر، أعط المتصفح فرصة للتحديث
+                        if (r % 200 === 0) await new Promise(res => setTimeout(res, 0));
+                    }
+                }
+            } catch (e) { console.error(e); }
         }
+
         document.getElementById('progressOverlay').style.display = 'none';
-        if (allData.length > 0) displayOnScreen();
-        else alert("لا توجد نتائج مطابقة.");
+        if (allData.length > 0) displayResults();
+        else alert("لا توجد نتائج.");
     }
 
-    function displayOnScreen() {
+    function displayResults() {
         document.getElementById('resultCard').classList.remove('d-none');
         document.getElementById('totalMatches').innerText = allData.length;
         const mainDisplay = document.getElementById('mainDisplayArea');
         mainDisplay.innerHTML = "";
-        const grouped = groupData(allData);
+        
+        const grouped = allData.reduce((acc, row) => {
+            const key = `${row._company} - ${row._docType} - ${userFilter} - ${getTodayDate()}`;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(row);
+            return acc;
+        }, {});
+
         for (let groupKey in grouped) {
-            mainDisplay.insertAdjacentHTML('beforeend', generateTableHTML(groupKey, grouped[groupKey], false));
+            // عرض أول 100 سطر فقط على الشاشة لمنع تهنيج المتصفح عند الرسم
+            const previewRows = grouped[groupKey].slice(0, 100);
+            mainDisplay.insertAdjacentHTML('beforeend', generateTableHTML(groupKey, previewRows, false));
+            if (grouped[groupKey].length > 100) {
+                mainDisplay.insertAdjacentHTML('beforeend', `<div class="alert alert-warning text-center small p-1">يوجد ${grouped[groupKey].length - 100} سطر إضافي مخفي (سيظهر بالكامل في ملف الـ PDF)</div>`);
+            }
         }
     }
 
     async function exportFullPDF() {
         const filterVal = document.getElementById('filterValue').value.trim();
-        const fileName = `DCS_Report_${filterVal}_${getTodayDate()}.pdf`;
-        
-        updateUI(50, "جاري تحسين التنسيق وتوليد ملف PDF...");
+        const fileName = `DCS_Full_Report_${filterVal}.pdf`;
+        updateUI(50, "جاري تحضير ملف الـ PDF الضخم...");
         document.getElementById('progressOverlay').style.display = 'flex';
 
-        const grouped = groupData(allData);
-        const groupKeys = Object.keys(grouped);
-        
-        const opt = {
-            margin: [5, 5, 5, 5], // تقليل الهوامش لملء الصفحة
-            filename: fileName,
-            image: { type: 'jpeg', quality: 1.0 },
-            html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } // A4 Landscape
-        };
-
-        let worker = html2pdf().set(opt).from(generateTableHTML(groupKeys[0], grouped[groupKeys[0]], true));
-        for (let i = 1; i < groupKeys.length; i++) {
-            const tableHtml = generateTableHTML(groupKeys[i], grouped[groupKeys[i]], true);
-            worker = worker.toPdf().get('pdf').then(function (pdf) { pdf.addPage(); }).from(tableHtml).toContainer().toCanvas().toImg().toPdf();
-        }
-
-        worker.save().then(() => { document.getElementById('progressOverlay').style.display = 'none'; });
-    }
-
-    function groupData(data) {
-        return data.reduce((acc, row) => {
-            const groupKey = `${row._company} - ${row._docType}`;
-            if (!acc[groupKey]) acc[groupKey] = [];
-            acc[groupKey].push(row);
+        // تجميع كل البيانات للطباعة
+        const printContainer = document.createElement('div');
+        const grouped = allData.reduce((acc, row) => {
+            const key = `${row._company} - ${row._docType} - ${userFilter} - ${getTodayDate()}`;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(row);
             return acc;
         }, {});
+
+        for (let groupKey in grouped) {
+            const tableHtml = generateTableHTML(groupKey, grouped[groupKey], true);
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = tableHtml;
+            printContainer.appendChild(wrapper);
+        }
+
+        const opt = {
+            margin: 5,
+            filename: fileName,
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true, letterRendering: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+            pagebreak: { mode: ['css', 'legacy'] }
+        };
+
+        html2pdf().set(opt).from(printContainer).save().then(() => {
+            document.getElementById('progressOverlay').style.display = 'none';
+        });
     }
 
-    function generateTableHTML(groupKey, rows, isForPDF) {
-        const todayStr = getTodayDate();
+    function generateTableHTML(title, rows, isForPDF) {
         rows.sort((a,b) => String(a["رقم الطلب"]).localeCompare(String(b["رقم الطلب"])));
+        let html = `<div dir="rtl" style="padding:10px; background:#fff;"><table class="excel-table" style="width:100%; border:1px solid #000;">
+            <thead>
+                <tr class="master-header-row"><td colspan="${finalHeaders.length+1}">${title}</td></tr>
+                <tr><th style="width:40px">#</th>${finalHeaders.map(h => `<th>${h}</th>`).join('')}</tr>
+            </thead><tbody>`;
         
-        // إعدادات العرض للـ PDF (توسيع الجدول لملء الصفحة)
-        const tableStyle = isForPDF ? 'width: 100%; table-layout: fixed; border-collapse: collapse;' : 'width: 100%; border-collapse: collapse;';
-        const fontSize = isForPDF ? "10pt" : "12px";
-        const padding = isForPDF ? "6px" : "8px";
-
-        // تحديد نسب مئوية للأعمدة لضمان ملء الصفحة A4 Landscape
-        const colWidths = isForPDF ? [
-            '5%',  // #
-            '18%', // رقم الطلب
-            '5%',  // الإصدار
-            '6%',  // كلاستر
-            '30%', // الموضوع (أكبر مساحة)
-            '10%', // تاريخ الاستلام
-            '10%', // تاريخ الرد
-            '7%',  // الكود
-            '9%'   // مهندس ECG
-        ] : [];
-
-        let html = `<div dir="rtl" style="padding: 0; background: #fff; width: 100%;">
-            <table style="${tableStyle}">
-                <thead>
-                    <tr>
-                        <td colspan="${finalHeaders.length + 1}" style="background: #cbd5e1; color: #000; font-weight: bold; text-align: center; padding: 10px; font-size: 14pt; border: 1.5pt solid #000;">
-                            ${groupKey} - ${userFilter} - ${todayStr}
-                        </td>
-                    </tr>
-                    <tr style="background: #217346; color: white;">
-                        <th style="border: 1pt solid #000; padding: ${padding}; font-size: ${fontSize}; width: ${colWidths[0] || '50px'};">#</th>
-                        ${finalHeaders.map((h, i) => {
-                            return `<th style="border: 1pt solid #000; padding: ${padding}; font-size: ${fontSize}; width: ${colWidths[i+1] || 'auto'};">${h}</th>`;
-                        }).join('')}
-                    </tr>
-                </thead>
-                <tbody>`;
-
         rows.forEach((row, index) => {
-            html += `<tr><td style="border: 1pt solid #000; padding: ${padding}; font-weight: bold; font-size: ${fontSize}; background:#f8f9fa;">${index + 1}</td>`;
+            html += `<tr><td style="background:#f8f9fa">${index+1}</td>`;
             finalHeaders.forEach(h => {
-                const isSubject = h === "الموضوع";
-                const textAlign = isSubject ? 'right' : 'center';
-                const wrapStyle = isSubject ? 'white-space: normal; word-wrap: break-word;' : 'white-space: nowrap;';
-                html += `<td style="border: 1pt solid #000; padding: ${padding}; font-size: ${fontSize}; text-align: ${textAlign}; ${wrapStyle}">${row[h]}</td>`;
+                const cls = h === "الموضوع" ? "subject-column" : "";
+                html += `<td class="${cls}" style="border:1px solid #d1d5db">${row[h] || ""}</td>`;
             });
             html += `</tr>`;
         });
-
-        return html + `</tbody></table></div>`;
+        return html + "</tbody></table></div>";
     }
 
     function exportFullExcel() {
-        const exportData = allData.map(r => { const { _docType, _company, ...clean } = r; return clean; });
+        const exportData = allData.map(({_docType, _company, ...clean}) => clean);
         const ws = XLSX.utils.json_to_sheet(exportData, { header: finalHeaders });
-        ws['!cols'] = finalHeaders.map(h => ({ wch: h === "الموضوع" ? 60 : 25 }));
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Report");
-        wb.Workbook = { Views: [{ RTL: true }] };
-        XLSX.writeFile(wb, `Report_${userFilter}_${getTodayDate()}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "FullReport");
+        XLSX.writeFile(wb, `DCS_Report_${userFilter}.xlsx`);
     }
 
     function updateUI(pct, msg) {
@@ -269,6 +239,5 @@
         document.getElementById('opTitle').innerText = msg;
     }
 </script>
-
 </body>
 </html>
