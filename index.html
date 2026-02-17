@@ -2,72 +2,49 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام تقارير ECG الاحترافي</title>
+    <title>نظام تقارير ECG المطور</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        body { font-family: 'Cairo', sans-serif; padding: 20px; background: #f0f4f8; color: #333; }
+        body { font-family: 'Cairo', sans-serif; padding: 20px; background: #f0f4f8; }
         .container { max-width: 1350px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-        
-        /* واجهة التحكم */
-        .controls { display: flex; gap: 15px; margin-bottom: 30px; background: #fff; padding: 20px; border: 1px solid #d1d9e6; border-radius: 12px; align-items: center; }
-        input[type="file"], input[type="text"] { flex: 1; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-family: 'Cairo'; outline: none; transition: 0.3s; }
-        input[type="text"]:focus { border-color: #1a73e8; }
-        
-        button { padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
+        .controls { display: flex; gap: 15px; margin-bottom: 30px; background: #fff; padding: 20px; border: 1px solid #d1d9e6; border-radius: 12px; }
+        input[type="file"], input[type="text"] { flex: 1; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-family: 'Cairo'; }
+        button { padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; transition: 0.3s; }
         .btn-search { background: #1a73e8; color: white; }
         .btn-pdf { background: #d93025; color: white; display: none; }
-        button:hover { transform: translateY(-2px); opacity: 0.9; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-
-        /* منطقة التقرير */
+        
         #pdf-area { padding: 10px; background: white; }
         .dynamic-header { 
-            text-align: center; 
-            font-size: 24px; 
-            font-weight: bold; 
-            margin-bottom: 25px; 
-            color: #004085;
-            padding: 15px;
-            border: 3px double #004085;
-            text-transform: uppercase;
-            background: #f8f9fa;
+            text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 25px; color: #004085;
+            padding: 15px; border: 3px double #004085; background: #f8f9fa;
         }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: auto; }
-        th { 
-            background-color: #004085; 
-            color: #ffffff; 
-            padding: 12px 8px;
-            border: 1px solid #000;
-            font-size: 14px;
-            white-space: nowrap;
-        }
-        td { border: 1px solid #000; padding: 10px 5px; text-align: center; font-size: 13px; color: #000; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background-color: #004085; color: #ffffff; padding: 12px; border: 1px solid #000; font-size: 14px; }
+        td { border: 1px solid #000; padding: 10px; text-align: center; font-size: 13px; color: #000; }
         tr:nth-child(even) { background-color: #f2f5f8; }
-        
-        .zero-val { font-weight: bold; color: #e67e22; background: #fff3e0; padding: 2px 5px; border-radius: 4px; }
-        #status { text-align: center; margin: 15px; font-weight: bold; font-size: 16px; }
+        .zero-val { font-weight: bold; color: #e67e22; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align:center; color:#1a73e8; margin-top:0;">نظام الفلترة الموحد وإصدار التقارير</h2>
+    <h2 style="text-align:center; color:#1a73e8;">نظام الفلترة - إصلاح عمود REV</h2>
     
     <div class="controls">
         <input type="file" id="fileInput" multiple accept=".xlsx, .xls">
-        <input type="text" id="filterInput" placeholder="أدخل قيمة الكود للبحث (مثلاً: 0 أو OPEN)...">
-        <button class="btn-search" onclick="processFiles()">🔍 توليد التقرير</button>
-        <button id="pdfBtn" class="btn-pdf" onclick="generatePDF()">📄 حفظ PDF عالي الجودة</button>
+        <input type="text" id="filterInput" placeholder="أدخل كود البحث...">
+        <button class="btn-search" onclick="processFiles()">🔍 تشغيل</button>
+        <button id="pdfBtn" class="btn-pdf" onclick="generatePDF()">📄 تصدير PDF</button>
     </div>
     
-    <div id="status"></div>
+    <div id="status" style="text-align:center; margin-bottom:10px; font-weight:bold;"></div>
 
     <div id="pdf-area">
         <div id="reportTitle" class="dynamic-header" style="display:none;"></div>
-        
         <table id="resultTable" style="display:none;">
             <thead>
                 <tr>
@@ -87,42 +64,25 @@
 </div>
 
 <script>
-    // دالة تنسيق التاريخ ليكون DD-MM-YYYY
     function formatDate(d) {
         if (d === 0 || d === "0") return "0";
-        if (!d || d === "") return "-";
-        
-        let date;
-        if (typeof d === 'number' && d > 30000) {
-            date = new Date((d - 25569) * 86400 * 1000);
-        } else {
-            date = new Date(d);
-        }
-
+        if (!d || d === "" || d === undefined) return "-";
+        let date = (typeof d === 'number' && d > 30000) ? new Date((d - 25569) * 86400 * 1000) : new Date(d);
         if (isNaN(date.getTime())) return d;
-
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
+        return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`;
     }
 
     async function processFiles() {
         const fileInput = document.getElementById('fileInput');
         const filterInput = document.getElementById('filterInput').value.trim();
         const tableBody = document.getElementById('tableBody');
-        const status = document.getElementById('status');
         const reportTitle = document.getElementById('reportTitle');
         
-        if (!fileInput.files.length || filterInput === "") {
-            alert("يرجى اختيار الملفات وإدخال الكود المطلوب للبحث");
-            return;
-        }
+        if (!fileInput.files.length || filterInput === "") return alert("اكمل البيانات");
 
-        status.innerHTML = "⏳ جاري فحص جميع الملفات والشيتات... يرجى الانتظار";
         tableBody.innerHTML = "";
         let count = 0;
-        let firstOrderNumber = ""; 
+        let firstOrder = ""; 
 
         for (let file of fileInput.files) {
             const data = await file.arrayBuffer();
@@ -131,14 +91,9 @@
             wb.SheetNames.forEach(name => {
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: "" });
                 rows.forEach(row => {
-                    // مقارنة الكود (تجاهل المسافات وحالة الأحرف)
                     if (String(row["الكود"]).trim().toUpperCase() === filterInput.toUpperCase()) {
                         count++;
-                        
-                        // التقاط أول رقم طلب لاستنتاج العنوان
-                        if (!firstOrderNumber && row["رقم الطلب"]) {
-                            firstOrderNumber = String(row["رقم الطلب"]);
-                        }
+                        if (!firstOrder && row["رقم الطلب"]) firstOrder = String(row["رقم الطلب"]);
 
                         let tr = document.createElement('tr');
                         const columns = ["رقم الطلب", "REV", "CL", "الموضوع", "تاريخ الاستلام", "تاريخ الرد", "الكود", "مهندس ECG"];
@@ -147,12 +102,22 @@
                             let td = document.createElement('td');
                             let val = row[col];
 
-                            if (val === 0 || val === "0") {
-                                td.innerHTML = `<span class="zero-val">0</span>`;
+                            // إصلاح مشكلة undefined والـ 0 في REV والكود
+                            if (col === "REV" || col === "الكود") {
+                                if (val === 0 || val === "0" || val === "" || val === undefined || val === null) {
+                                    td.innerHTML = `<span class="zero-val">0</span>`;
+                                } else {
+                                    td.innerText = val;
+                                }
                             } else if (col.includes("تاريخ")) {
                                 td.innerText = formatDate(val);
                             } else {
-                                td.innerText = val || "-";
+                                // باقي الأعمدة
+                                if (val === undefined || val === null || val === "") {
+                                    td.innerText = "-";
+                                } else {
+                                    td.innerText = val;
+                                }
                             }
                             tr.appendChild(td);
                         });
@@ -163,52 +128,30 @@
         }
 
         if (count > 0) {
-            // تحليل رقم الطلب لاستخراج الشركة والنوع
-            // المثال: EGC-ECG-DWG-ARCH-0024 -> الشركة EGC (1) والنوع DWG (3)
-            let company = "EGC"; 
-            let docType = "MAT";
-            
-            if (firstOrderNumber.includes("-")) {
-                let parts = firstOrderNumber.split("-");
-                if (parts[0]) company = parts[0]; 
-                if (parts[2]) docType = parts[2]; 
+            let comp = "EGC", type = "MAT";
+            if (firstOrder.includes("-")) {
+                let p = firstOrder.split("-");
+                comp = p[0] || "EGC";
+                type = p[2] || "MAT";
             }
-
-            const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-            reportTitle.innerText = `${company}-${docType}-${filterInput.toUpperCase()} ${today}`;
-            
+            const date = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+            reportTitle.innerText = `${comp}-${type}-${filterInput.toUpperCase()} ${date}`;
             reportTitle.style.display = "block";
             document.getElementById('resultTable').style.display = "table";
-            document.getElementById('pdfBtn').style.display = "flex";
-            status.innerHTML = `✅ تم العثور على <span style="color:#1a73e8">${count}</span> سجلات مطابقة.`;
-        } else {
-            status.innerHTML = "❌ لم يتم العثور على أي بيانات مطابقة لهذا الكود.";
-            reportTitle.style.display = "none";
-            document.getElementById('resultTable').style.display = "none";
-            document.getElementById('pdfBtn').style.display = "none";
+            document.getElementById('pdfBtn').style.display = "inline-block";
         }
     }
 
     function generatePDF() {
         const element = document.getElementById('pdf-area');
-        const filterVal = document.getElementById('filterInput').value;
         const opt = {
-            margin:       [10, 5, 10, 5],
-            filename:     `Report_${filterVal}_${new Date().getTime()}.pdf`,
-            image:        { type: 'jpeg', quality: 1 },
-            html2canvas:  { 
-                scale: 3, 
-                useCORS: true, 
-                letterRendering: true,
-                dpi: 300
-            },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            margin: [10, 5, 10, 5],
+            filename: `Report.pdf`,
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 3, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
         };
-        
-        status.innerHTML = "⏳ جاري تصدير ملف PDF عالي الجودة...";
-        html2pdf().set(opt).from(element).save().then(() => {
-            status.innerHTML = "✅ تم تحميل التقرير بنجاح.";
-        });
+        html2pdf().set(opt).from(element).save();
     }
 </script>
 
