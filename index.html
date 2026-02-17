@@ -2,87 +2,72 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام تقارير ECG المطور</title>
+    <title>نظام تقارير ECG - فصول مستقلة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        body { font-family: 'Cairo', sans-serif; padding: 20px; background: #f0f4f8; }
-        .container { max-width: 1350px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-        .controls { display: flex; gap: 15px; margin-bottom: 30px; background: #fff; padding: 20px; border: 1px solid #d1d9e6; border-radius: 12px; }
-        input[type="file"], input[type="text"] { flex: 1; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-family: 'Cairo'; }
-        button { padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; transition: 0.3s; }
-        .btn-search { background: #1a73e8; color: white; }
-        .btn-pdf { background: #d93025; color: white; display: none; }
+        body { font-family: 'Cairo', sans-serif; padding: 20px; background: #f0f4f8; margin: 0; }
+        .container { max-width: 1400px; margin: auto; background: white; padding: 20px; border-radius: 12px; }
+        .no-print { background: #fff; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #ddd; }
+        button { padding: 12px 25px; background: #1a73e8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; }
         
-        #pdf-area { padding: 10px; background: white; }
+        /* تنسيق التقرير */
+        .page-wrapper { width: 100%; background: white; page-break-after: always; } /* فصل الصفحة بعد كل جدول */
         .dynamic-header { 
-            text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 25px; color: #004085;
-            padding: 15px; border: 3px double #004085; background: #f8f9fa;
+            text-align: center; font-size: 22px; font-weight: bold; 
+            margin-bottom: 15px; padding: 10px; border: 2px solid #004085; 
+            color: #004085; background: #f9f9f9; 
         }
 
-        table { width: 100%; border-collapse: collapse; }
-        th { background-color: #004085; color: #ffffff; padding: 12px; border: 1px solid #000; font-size: 14px; }
-        td { border: 1px solid #000; padding: 10px; text-align: center; font-size: 13px; color: #000; }
-        tr:nth-child(even) { background-color: #f2f5f8; }
-        .zero-val { font-weight: bold; color: #e67e22; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 30px; }
+        th { background-color: #004085 !important; color: white !important; padding: 10px; border: 1px solid #000; font-size: 13px; }
+        td { border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px; word-wrap: break-word; }
+        .zero-val { font-weight: bold; color: #d35400; }
+
+        @media print {
+            @page { size: A4 landscape; margin: 10mm; }
+            .no-print { display: none !important; }
+            .page-wrapper { page-break-after: always; }
+            th { -webkit-print-color-adjust: exact; background-color: #004085 !important; color: white !important; }
+        }
+
+        /* أحجام الأعمدة */
+        th:nth-child(1) { width: 18%; } th:nth-child(2) { width: 5%; }
+        th:nth-child(3) { width: 5%; } th:nth-child(4) { width: 32%; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align:center; color:#1a73e8;">نظام الفلترة - إصلاح عمود REV</h2>
-    
-    <div class="controls">
+    <div class="no-print">
+        <h2>نظام التقارير الفنية - فصل الأنواع تلقائياً</h2>
         <input type="file" id="fileInput" multiple accept=".xlsx, .xls">
-        <input type="text" id="filterInput" placeholder="أدخل كود البحث...">
-        <button class="btn-search" onclick="processFiles()">🔍 تشغيل</button>
-        <button id="pdfBtn" class="btn-pdf" onclick="generatePDF()">📄 تصدير PDF</button>
+        <input type="text" id="filterInput" placeholder="أدخل الكود...">
+        <button onclick="processFiles()">🔍 استخراج البيانات</button>
+        <button id="printBtn" style="background:#28a745; display:none;" onclick="window.print()">🖨️ طباعة التقرير</button>
     </div>
-    
-    <div id="status" style="text-align:center; margin-bottom:10px; font-weight:bold;"></div>
 
-    <div id="pdf-area">
-        <div id="reportTitle" class="dynamic-header" style="display:none;"></div>
-        <table id="resultTable" style="display:none;">
-            <thead>
-                <tr>
-                    <th>رقم الطلب</th>
-                    <th>REV</th>
-                    <th>CL</th>
-                    <th>الموضوع</th>
-                    <th>تاريخ الاستلام</th>
-                    <th>تاريخ الرد</th>
-                    <th>الكود</th>
-                    <th>مهندس ECG</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
+    <div id="report-container"></div>
 </div>
 
 <script>
     function formatDate(d) {
         if (d === 0 || d === "0") return "0";
-        if (!d || d === "" || d === undefined) return "-";
+        if (!d) return "-";
         let date = (typeof d === 'number' && d > 30000) ? new Date((d - 25569) * 86400 * 1000) : new Date(d);
-        if (isNaN(date.getTime())) return d;
-        return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`;
+        return isNaN(date.getTime()) ? d : `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`;
     }
 
     async function processFiles() {
         const fileInput = document.getElementById('fileInput');
-        const filterInput = document.getElementById('filterInput').value.trim();
-        const tableBody = document.getElementById('tableBody');
-        const reportTitle = document.getElementById('reportTitle');
+        const filterInput = document.getElementById('filterInput').value.trim().toUpperCase();
+        const reportContainer = document.getElementById('report-container');
         
         if (!fileInput.files.length || filterInput === "") return alert("اكمل البيانات");
-
-        tableBody.innerHTML = "";
-        let count = 0;
-        let firstOrder = ""; 
+        reportContainer.innerHTML = "";
+        
+        let groupedData = {}; // تجميع البيانات حسب النوع
 
         for (let file of fileInput.files) {
             const data = await file.arrayBuffer();
@@ -91,67 +76,54 @@
             wb.SheetNames.forEach(name => {
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: "" });
                 rows.forEach(row => {
-                    if (String(row["الكود"]).trim().toUpperCase() === filterInput.toUpperCase()) {
-                        count++;
-                        if (!firstOrder && row["رقم الطلب"]) firstOrder = String(row["رقم الطلب"]);
-
-                        let tr = document.createElement('tr');
-                        const columns = ["رقم الطلب", "REV", "CL", "الموضوع", "تاريخ الاستلام", "تاريخ الرد", "الكود", "مهندس ECG"];
-
-                        columns.forEach(col => {
-                            let td = document.createElement('td');
-                            let val = row[col];
-
-                            // إصلاح مشكلة undefined والـ 0 في REV والكود
-                            if (col === "REV" || col === "الكود") {
-                                if (val === 0 || val === "0" || val === "" || val === undefined || val === null) {
-                                    td.innerHTML = `<span class="zero-val">0</span>`;
-                                } else {
-                                    td.innerText = val;
-                                }
-                            } else if (col.includes("تاريخ")) {
-                                td.innerText = formatDate(val);
-                            } else {
-                                // باقي الأعمدة
-                                if (val === undefined || val === null || val === "") {
-                                    td.innerText = "-";
-                                } else {
-                                    td.innerText = val;
-                                }
-                            }
-                            tr.appendChild(td);
-                        });
-                        tableBody.appendChild(tr);
+                    if (String(row["الكود"]).trim().toUpperCase() === filterInput) {
+                        let orderNum = String(row["رقم الطلب"] || "");
+                        let parts = orderNum.split("-");
+                        let company = parts[0] || "EGC";
+                        let docType = parts[2] || "OTHERS"; // استخراج النوع (DOC أو DWG)
+                        
+                        let groupKey = `${company}-${docType}`;
+                        if (!groupedData[groupKey]) groupedData[groupKey] = [];
+                        groupedData[groupKey].push(row);
                     }
                 });
             });
         }
 
-        if (count > 0) {
-            let comp = "EGC", type = "MAT";
-            if (firstOrder.includes("-")) {
-                let p = firstOrder.split("-");
-                comp = p[0] || "EGC";
-                type = p[2] || "MAT";
-            }
-            const date = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-            reportTitle.innerText = `${comp}-${type}-${filterInput.toUpperCase()} ${date}`;
-            reportTitle.style.display = "block";
-            document.getElementById('resultTable').style.display = "table";
-            document.getElementById('pdfBtn').style.display = "inline-block";
-        }
-    }
-
-    function generatePDF() {
-        const element = document.getElementById('pdf-area');
-        const opt = {
-            margin: [10, 5, 10, 5],
-            filename: `Report.pdf`,
-            image: { type: 'jpeg', quality: 1 },
-            html2canvas: { scale: 3, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-        };
-        html2pdf().set(opt).from(element).save();
+        const keys = Object.keys(groupedData);
+        if (keys.length > 0) {
+            keys.forEach(groupKey => {
+                const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+                let html = `
+                    <div class="page-wrapper">
+                        <div class="dynamic-header">${groupKey}-${filterInput} ${today}</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>رقم الطلب</th><th>REV</th><th>CL</th><th>الموضوع</th>
+                                    <th>تاريخ الاستلام</th><th>تاريخ الرد</th><th>الكود</th><th>مهندس ECG</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${groupedData[groupKey].map(row => `
+                                    <tr>
+                                        <td>${row["رقم الطلب"]}</td>
+                                        <td>${(row["REV"] === 0 || row["REV"] === "0" || !row["REV"]) ? '<span class="zero-val">0</span>' : row["REV"]}</td>
+                                        <td>${row["CL"] || "-"}</td>
+                                        <td style="text-align:right; direction:ltr;">${row["الموضوع"]}</td>
+                                        <td>${formatDate(row["تاريخ الاستلام"])}</td>
+                                        <td>${formatDate(row["تاريخ الرد"])}</td>
+                                        <td class="zero-val">${row["الكود"]}</td>
+                                        <td>${row["مهندس ECG"] || "-"}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`;
+                reportContainer.innerHTML += html;
+            });
+            document.getElementById('printBtn').style.display = "block";
+        } else { alert("لا توجد نتائج"); }
     }
 </script>
 
