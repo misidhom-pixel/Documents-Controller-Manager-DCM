@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام تقارير ECG - فصول مستقلة</title>
+    <title>ECG Report System</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -41,11 +41,11 @@
 
 <div class="container">
     <div class="no-print">
-        <h2>نظام التقارير الفنية - فصل الأنواع تلقائياً</h2>
+        <h2>ECG Report System<h2>
         <input type="file" id="fileInput" multiple accept=".xlsx, .xls">
-        <input type="text" id="filterInput" placeholder="أدخل الكود...">
-        <button onclick="processFiles()">🔍 استخراج البيانات</button>
-        <button id="printBtn" style="background:#28a745; display:none;" onclick="window.print()">🖨️ طباعة التقرير</button>
+        <input type="text" id="filterInput" placeholder="Code">
+        <button onclick="processFiles()">View</button>
+        <button id="printBtn" style="background:#28a745; display:none;" onclick="window.print()">Print</button>
     </div>
 
     <div id="report-container"></div>
@@ -64,7 +64,7 @@
         const filterInput = document.getElementById('filterInput').value.trim().toUpperCase();
         const reportContainer = document.getElementById('report-container');
         
-        if (!fileInput.files.length || filterInput === "") return alert("اكمل البيانات");
+        if (!fileInput.files.length || filterInput === "") return alert("Insert Data");
         reportContainer.innerHTML = "";
         
         let groupedData = {}; // تجميع البيانات حسب النوع
@@ -123,7 +123,7 @@
                 reportContainer.innerHTML += html;
             });
             document.getElementById('printBtn').style.display = "block";
-        } else { alert("لا توجد نتائج"); }
+        } else { alert("No Match Data"); }
     }
 </script>
 
