@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>ECG Report System</title>
+    <title>ECG Reports System</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -41,11 +41,11 @@
 
 <div class="container">
     <div class="no-print">
-        <h2>ECG Report System<h2>
+        <h2>ECG Reports System</h2>
         <input type="file" id="fileInput" multiple accept=".xlsx, .xls">
-        <input type="text" id="filterInput" placeholder="Code">
-        <button onclick="processFiles()">View</button>
-        <button id="printBtn" style="background:#28a745; display:none;" onclick="window.print()">Print</button>
+        <input type="text" id="filterInput" placeholder="Insert Code">
+        <button onclick="processFiles()"> View</button>
+        <button id="printBtn" style="background:#28a745; display:none;" onclick="window.print()">🖨️ Print</button>
     </div>
 
     <div id="report-container"></div>
@@ -64,7 +64,7 @@
         const filterInput = document.getElementById('filterInput').value.trim().toUpperCase();
         const reportContainer = document.getElementById('report-container');
         
-        if (!fileInput.files.length || filterInput === "") return alert("Insert Data");
+        if (!fileInput.files.length || filterInput === "") return alert("Complete Data");
         reportContainer.innerHTML = "";
         
         let groupedData = {}; // تجميع البيانات حسب النوع
