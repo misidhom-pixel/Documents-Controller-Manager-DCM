@@ -2,155 +2,140 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>ECG Reports System - Final Edition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+    <title>ECG System - Legacy Support</title>
     <style>
-        body { font-family: 'Cairo', sans-serif; padding: 20px; background: #f0f4f8; margin: 0; }
-        .container { max-width: 1400px; margin: auto; background: white; padding: 20px; border-radius: 12px; }
-        .no-print { background: #fff; padding: 30px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #ddd; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .controls { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
-        input, button { padding: 15px 25px; font-size: 20px; border-radius: 10px; border: 2px solid #ccc; font-family: 'Cairo'; transition: 0.3s; }
-        input[type="file"] { width: 450px; background: #f9f9f9; cursor: pointer; }
-        #filterInput { width: 250px; font-weight: bold; text-align: center; border: 2px solid #1a73e8; color: #1a73e8; }
-        button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background: #1557b0; transform: translateY(-2px); }
-        #printBtn { background: #28a745; display: none; }
-
-        /* تنسيق التقرير */
-        .page-wrapper { width: 100%; background: white; page-break-after: always; }
-        .dynamic-header { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; padding: 15px; border: 3px solid #004085; color: #004085; background: #f9f9f9; }
-
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 30px; }
-        thead { display: table-header-group; } 
-        th { background-color: #004085 !important; color: white !important; padding: 12px; border: 1px solid #000; font-size: 13px; white-space: nowrap; }
-        td { border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px; word-wrap: break-word; }
-        tr { page-break-inside: avoid; }
-
-        /* منع كسر النص في الأعمدة الثلاثة المحددة */
-        /* عمود رقم الطلب (1) - عمود تاريخ الاستلام (5) - عمود تاريخ الرد (6) */
-        td:nth-child(1), td:nth-child(5), td:nth-child(6) {
-            white-space: nowrap !important;
-            direction: ltr; /* لضمان ظهور أرقام الطلب والتواريخ بشكل صحيح من اليسار لليمين */
-            font-size: 10px; /* تصغير طفيف جداً لضمان الملاءمة */
-        }
-
-        .zero-val { font-weight: bold; color: #d35400; }
+        body { font-family: Arial, sans-serif; padding: 10px; background: #f0f4f8; }
+        .container { width: 100%; margin: auto; background: white; padding: 10px; border-radius: 8px; }
+        .no-print { background: #eee; padding: 15px; border: 1px solid #ccc; margin-bottom: 10px; }
+        
+        /* تصغير الأحجام قليلاً لتناسب شاشة التاب p5100 */
+        input, button { padding: 10px; font-size: 16px; margin: 5px; }
+        input[type="file"] { width: 90%; }
+        #filterInput { width: 150px; font-weight: bold; }
+        
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
+        th { background-color: #004085; color: white; padding: 8px; border: 1px solid #000; }
+        td { border: 1px solid #000; padding: 5px; text-align: center; word-wrap: break-word; }
+        
+        /* منع كسر السطر في الأعمدة الثلاثة */
+        .no-wrap { white-space: nowrap !important; font-size: 10px; }
 
         @media print {
-            @page { size: A4 landscape; margin: 8mm; }
             .no-print { display: none !important; }
-            th { -webkit-print-color-adjust: exact; background-color: #004085 !important; color: white !important; }
+            @page { size: A4 landscape; }
         }
-
-        /* توزيع العرض الجديد (المقاسات الذهبية) */
-        th:nth-child(1) { width: 20%; } /* رقم الطلب - زدنا العرض */
-        th:nth-child(2) { width: 4%; }  /* REV */
-        th:nth-child(3) { width: 4%; }  /* CL */
-        th:nth-child(4) { width: 26%; } /* الموضوع - قللنا العرض لصالح الآخرين */
-        th:nth-child(5) { width: 12%; } /* تاريخ الاستلام */
-        th:nth-child(6) { width: 12%; } /* تاريخ الرد */
-        th:nth-child(7) { width: 8%; }  /* الكود */
-        th:nth-child(8) { width: 14%; } /* مهندس ECG */
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
 <div class="container">
     <div class="no-print">
-        <h2 style="margin-top:0; color:#1a73e8; font-size: 28px;">ECG Reports System</h2>
-        <div class="controls">
-            <input type="file" id="fileInput" multiple accept=".xlsx, .xls">
-            <input type="text" id="filterInput" placeholder="Insert Code">
-            <button onclick="processFiles()">🔍 View Report</button>
-            <button id="printBtn" onclick="window.print()">🖨️ Save/Print</button>
-        </div>
+        <h3>ECG Reports (Tab P5100 Version)</h3>
+        <input type="file" id="fileInput" multiple>
+        <br>
+        <input type="text" id="filterInput" placeholder="Insert Code">
+        <button onclick="processFiles()">View Report</button>
+        <button id="printBtn" style="display:none;" onclick="window.print()">Print</button>
     </div>
     <div id="report-container"></div>
 </div>
 
 <script>
+    // تعديل دالة التاريخ لتكون أبسط للمتصفحات القديمة
     function formatDate(d) {
-        if (d === 0 || d === "0") return "0";
-        if (!d) return "-";
-        let date = (typeof d === 'number' && d > 30000) ? new Date((d - 25569) * 86400 * 1000) : new Date(d);
-        if (isNaN(date.getTime())) return d;
-        // تنسيق مضغوط DD-MM-YYYY
-        return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`;
+        if (!d || d === 0 || d === "0") return "-";
+        try {
+            var date = (typeof d === 'number') ? new Date((d - 25569) * 86400 * 1000) : new Date(d);
+            var day = date.getDate() < 10 ? '0' + date.getDate() : date.getDate();
+            var month = (date.getMonth() + 1) < 10 ? '0' + (date.getMonth() + 1) : (date.getMonth() + 1);
+            return day + '-' + month + '-' + date.getFullYear();
+        } catch(e) { return d; }
     }
 
-    async function processFiles() {
-        const fileInput = document.getElementById('fileInput');
-        const filterInput = document.getElementById('filterInput').value.trim().toUpperCase();
-        const reportContainer = document.getElementById('report-container');
+    function processFiles() {
+        var fileInput = document.getElementById('fileInput');
+        var filterInput = document.getElementById('filterInput').value.toUpperCase();
+        var reportContainer = document.getElementById('report-container');
         
-        if (!fileInput.files.length || filterInput === "") return alert("Please select files and insert a code.");
-        reportContainer.innerHTML = "<p style='text-align:center; font-weight:bold;'>Processing...</p>";
-        
-        let groupedData = {};
+        if (!fileInput.files.length || !filterInput) {
+            alert("Please select files and enter code");
+            return;
+        }
 
-        for (let file of fileInput.files) {
-            const data = await file.arrayBuffer();
-            const wb = XLSX.read(data, { cellDates: true });
-            
-            wb.SheetNames.forEach(name => {
-                const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: "" });
-                rows.forEach(row => {
-                    let codeVal = String(row["الكود"] || "").trim().toUpperCase();
-                    if (codeVal === filterInput) {
-                        let orderNum = String(row["رقم الطلب"] || "");
-                        let parts = orderNum.split("-");
-                        let company = parts[0] || "EGC";
-                        let docType = parts[2] || "OTHERS";
-                        
-                        let groupKey = `${company}-${docType}`;
-                        if (!groupedData[groupKey]) groupedData[groupKey] = [];
-                        groupedData[groupKey].push(row);
+        reportContainer.innerHTML = "Loading...";
+        var groupedData = {};
+
+        // استخدام FileReader التقليدي المتوافق مع الأجهزة القديمة
+        var files = fileInput.files;
+        var filesProcessed = 0;
+
+        for (var i = 0; i < files.length; i++) {
+            (function(file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var data = new Uint8Array(e.target.result);
+                    var workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                    
+                    workbook.SheetNames.forEach(function(sheetName) {
+                        var json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                        json.forEach(function(row) {
+                            if (String(row["الكود"] || "").toUpperCase().trim() === filterInput) {
+                                var order = String(row["رقم الطلب"] || "");
+                                var type = order.split("-")[2] || "OTHERS";
+                                if (!groupedData[type]) groupedData[type] = [];
+                                groupedData[type].push(row);
+                            }
+                        });
+                    });
+
+                    filesProcessed++;
+                    if (filesProcessed === files.length) {
+                        renderReport(groupedData, filterInput);
                     }
-                });
-            });
+                };
+                reader.readAsArrayBuffer(file);
+            })(files[i]);
+        }
+    }
+
+    function renderReport(data, filter) {
+        var container = document.getElementById('report-container');
+        container.innerHTML = "";
+        var keys = [];
+        for (var k in data) keys.push(k);
+        
+        if (keys.length === 0) {
+            container.innerHTML = "No Results Found";
+            return;
         }
 
-        reportContainer.innerHTML = "";
-        const keys = Object.keys(groupedData).sort();
-        if (keys.length > 0) {
-            keys.forEach(groupKey => {
-                const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-                let html = `
-                    <div class="page-wrapper">
-                        <div class="dynamic-header">${groupKey}-${filterInput} | ${today}</div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>رقم الطلب</th><th>REV</th><th>CL</th><th>الموضوع</th>
-                                    <th>تاريخ الاستلام</th><th>تاريخ الرد</th><th>الكود</th><th>مهندس ECG</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${groupedData[groupKey].map(row => `
-                                    <tr>
-                                        <td>${row["رقم الطلب"]}</td>
-                                        <td>${(row["REV"] === 0 || row["REV"] === "0" || !row["REV"]) ? '<span class="zero-val">0</span>' : row["REV"]}</td>
-                                        <td>${row["CL"] || "-"}</td>
-                                        <td style="text-align:right; direction:rtl;">${row["الموضوع"]}</td>
-                                        <td>${formatDate(row["تاريخ الاستلام"])}</td>
-                                        <td>${formatDate(row["تاريخ الرد"])}</td>
-                                        <td class="zero-val">${row["الكود"]}</td>
-                                        <td>${row["مهندس ECG"] || "-"}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>`;
-                reportContainer.innerHTML += html;
+        keys.forEach(function(key) {
+            var html = '<div style="page-break-after:always;">';
+            html += '<h2 style="text-align:center;">' + key + ' - ' + filter + '</h2>';
+            html += '<table><thead><tr>';
+            html += '<th>Order No</th><th>REV</th><th>CL</th><th>Subject</th><th>Rec. Date</th><th>Reply Date</th><th>Code</th><th>Eng</th>';
+            html += '</tr></thead><tbody>';
+            
+            data[key].forEach(function(row) {
+                html += '<tr>';
+                html += '<td class="no-wrap">' + (row["رقم الطلب"] || "") + '</td>';
+                html += '<td>' + (row["REV"] || "0") + '</td>';
+                html += '<td>' + (row["CL"] || "-") + '</td>';
+                html += '<td style="text-align:right">' + (row["الموضوع"] || "") + '</td>';
+                html += '<td class="no-wrap">' + formatDate(row["تاريخ الاستلام"]) + '</td>';
+                html += '<td class="no-wrap">' + formatDate(row["تاريخ الرد"]) + '</td>';
+                html += '<td>' + (row["الكود"] || "") + '</td>';
+                html += '<td>' + (row["مهندس ECG"] || "-") + '</td>';
+                html += '</tr>';
             });
-            document.getElementById('printBtn').style.display = "inline-block";
-        } else { 
-            alert("No results found."); 
-            reportContainer.innerHTML = "";
-        }
+            
+            html += '</tbody></table></div>';
+            container.innerHTML += html;
+        });
+        document.getElementById('printBtn').style.display = "inline";
     }
 </script>
+
 </body>
 </html>
