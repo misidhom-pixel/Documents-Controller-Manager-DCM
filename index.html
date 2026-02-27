@@ -3,8 +3,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>ECG Reports System - RTL Edition V33</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>ECG Reports System Pro V37</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     
     <script>
         window.XLSX = {}; 
@@ -19,97 +19,101 @@
 
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --danger: #ef4444;
-            --success: #10b981;
-            --sidebar-bg: #1e293b;
+            --dark-blue: #0b2b4a;
+            --mid-blue: #1e40af;
+            --accent-blue: #2563eb;
+            --success-green: #198754;
+            --word-blue: #2b5797;
+            /* مقاسات الفونت الموحدة */
+            --font-data: 14px;
+            --font-header: 21px; 
         }
 
         body { 
             background: #e2e8f0; 
             font-family: 'Cairo', sans-serif; 
             margin: 0; padding: 0; min-height: 100vh;
-            direction: rtl; /* اتجاه الصفحة الأساسي */
         }
 
         /* --- شاشة التفعيل --- */
         #activation-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center;
+            background: #ffffff; z-index: 9999;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
         }
-        .act-card { background: white; padding: 40px; border-radius: 24px; width: 480px; text-align: center; }
+        .machine-id-box { background: #f5f5f5; padding: 15px; border-radius: 5px; color: #ef4444; font-size: 28px; font-weight: bold; margin-bottom: 25px; border: 1px solid #ddd; }
 
         /* --- الواجهة الرئيسية --- */
-        .app-container { max-width: 1350px; margin: 30px auto; padding: 0 20px; }
-        
-        .main-header {
-            background: var(--sidebar-bg); color: white;
-            padding: 20px 30px; border-radius: 20px;
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 25px;
+        .app-container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
+
+        /* --- الجزء العلوي (Control Panel) --- */
+        .premium-input-card {
+            background: linear-gradient(180deg, var(--dark-blue) 0%, var(--mid-blue) 100%);
+            border-radius: 20px; padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 30px; color: white;
         }
 
-        .control-panel {
-            background: white; border-radius: 24px; padding: 30px;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); 
-            margin-bottom: 30px;
+        .unified-layout {
+            display: flex; gap: 15px; align-items: flex-end; justify-content: center;
         }
 
-        .input-group-custom { 
-            display: flex; 
-            gap: 30px; 
-            align-items: flex-end; 
-            flex-wrap: wrap; 
+        .input-item { display: flex; flex-direction: column; gap: 5px; }
+        .label-style { font-weight: 700; font-size: 13px; color: #cbd5e1; margin-bottom: 3px; }
+
+        /* توحيد أحجام الخانات والتحكم */
+        .custom-control {
+            height: 50px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 15px; background: white; color: #333; font-size: 15px; outline: none;
         }
-        
-        .form-section { display: flex; flex-direction: column; gap: 8px; }
-        .file-section { flex: 2; min-width: 320px; }
-        .filter-section { flex: 0.5; min-width: 150px; }
-        .btns-section { flex: 1; min-width: 350px; display: flex; gap: 10px; }
+        #filterInput { font-weight: bold; text-align: center; color: var(--accent-blue); width: 150px; }
 
-        label { font-size: 14px; font-weight: 700; color: #475569; }
-
-        input.form-control { 
-            background: #f8fafc; border: 2px solid #e2e8f0; 
-            padding: 12px; border-radius: 14px; width: 100%; 
+        /* توحيد أحجام الأزرار الخمسة (View, PDF, Word) */
+        .btn-premium {
+            height: 50px; min-width: 140px; border-radius: 12px; border: none;
+            font-weight: 700; font-size: 15px; display: flex; align-items: center;
+            justify-content: center; gap: 8px; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
+        .btn-view { background: var(--accent-blue); color: white; }
+        .btn-pdf { background: var(--success-green); color: white; }
+        .btn-word { background: var(--word-blue); color: white; }
+        .btn-premium:hover { transform: translateY(-2px); filter: brightness(1.1); }
 
-        .btn-action {
-            padding: 12px 22px; border-radius: 12px; border: none;
-            font-weight: 700; cursor: pointer; display: flex; 
-            align-items: center; gap: 8px; font-size: 14px;
-            white-space: nowrap;
+        /* --- الجداول الموحدة (شاشة + PDF) --- */
+        .report-card { background: white; border-radius: 16px; margin-top: 25px; overflow: hidden; border: 2px solid #000; }
+        .dynamic-header { 
+            background: #f1f5f9 !important; color: #004085; padding: 15px; text-align: center; 
+            font-size: 26px; font-weight: bold; border-bottom: 3px solid #004085;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
         }
-        .btn-view { background: var(--primary); color: white; }
-        
-        .btn-export { display: none; }
-        .btn-pdf { background: var(--success); color: white; }
-        .btn-word { background: #2b5797; color: white; }
-
-        /* --- الجداول والعرض --- */
-        .report-card { background: white; border-radius: 16px; margin-top: 25px; overflow: hidden; border: 1px solid #e2e8f0; }
-        .dynamic-header { background: #f1f5f9; color: #1e3a5f; padding: 15px; text-align: center; font-size: 20px; font-weight: 700; border-bottom: 2px solid var(--primary); }
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; direction: rtl; }
-        th { background: var(--sidebar-bg); color: white; padding: 14px 8px; font-size: 13px; text-align: center; border: 1px solid #334155; }
-        td { padding: 10px 8px; text-align: center; font-size: 12px; border: 1px solid #e2e8f0; color: #334155; vertical-align: middle; }
-        tr:nth-child(even) { background: #f8fafc; }
-
-        /* --- إعدادات الطباعة RTL الصارمة --- */
-        @media print {
-            @page { size: A4 landscape; margin: 8mm; }
-            .no-print { display: none !important; }
-            body { background: white; direction: rtl !important; }
-            .report-card { border: 1px solid #000; box-shadow: none; direction: rtl !important; }
-            table { direction: rtl !important; width: 100% !important; }
-            th { background-color: #004085 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .dynamic-header { background-color: #f9f9f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        
+        /* رؤوس الأعمدة: ارتفاع 40 */
+        th { 
+            background-color: #004085 !important; color: white !important; 
+            height: 40px; font-size: var(--font-header); font-weight: bold !important;
+            text-align: center; border: 1px solid #000;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
         }
         
-        /* مقاسات الأعمدة المظبوطة */
+        /* السطور العادية: ارتفاع 25 */
+        td { 
+            height: 25px; font-size: var(--font-data); font-weight: bold !important;
+            text-align: center; border: 1px solid #000; color: #000;
+            vertical-align: middle; background: white !important;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        }
+
+        @media print {
+            @page { size: A4 landscape; margin: 5mm; }
+            .no-print { display: none !important; }
+            body { background: white; }
+            td:nth-child(1), td:nth-child(5), td:nth-child(6) { white-space: nowrap !important; direction: ltr; font-size: 11px; }
+        }
+
+        /* أوزان الأعمدة */
         th:nth-child(1) { width: 18%; } th:nth-child(2) { width: 4%; } th:nth-child(3) { width: 4%; } 
         th:nth-child(4) { width: 38%; } th:nth-child(5) { width: 9%; } th:nth-child(6) { width: 9%; } 
         th:nth-child(7) { width: 8%; } th:nth-child(8) { width: 10%; }
@@ -118,45 +122,42 @@
 <body>
 
 <div id="activation-screen">
-    <div class="act-card shadow-lg">
-        <i class="bi bi-shield-lock-fill text-primary" style="font-size: 3rem;"></i>
-        <h2 class="mt-3 fw-bold">تفعيل النظام</h2>
+    <div class="text-center">
+        <h2 class="fw-bold" style="color: var(--dark-blue); font-size: 42px;">تفعيل البرنامج</h2>
         <div id="display-machine-id" class="machine-id-box" style="color:red">...</div>
-        <input type="text" id="activation-key-input" class="act-input" placeholder="ACT-XXXXXX">
-        <button onclick="verifyKey()" class="btn-action btn-view w-100 justify-content-center py-3">تفعيل الآن</button>
+        <input type="text" id="activation-key-input" class="form-control mb-3 text-center" style="font-size:22px; width:400px; margin:auto;" placeholder="ACT-XXXXXX">
+        <button onclick="verifyKey()" class="btn btn-primary px-5 py-3 fw-bold fs-4" style="border-radius:12px">تفعيل الآن</button>
     </div>
 </div>
 
-<div class="app-container" id="main-app">
-    <div class="main-header no-print">
-        <div class="d-flex align-items-center gap-3">
-            <i class="bi bi-file-earmark-bar-graph-fill fs-2 text-info"></i>
-            <h4 class="m-0 fw-bold">ECG Reports Management</h4>
-        </div>
-        <span class="badge bg-success py-2 px-3"><i class="bi bi-patch-check"></i> Licensed</span>
-    </div>
+<div class="app-container" id="main-app" style="display:none;">
+    <div class="premium-input-card no-print">
+        <div class="unified-layout">
+            <!-- رفع الملفات -->
+            <div class="input-item" style="flex: 1;">
+                <label class="label-style">Upload Excel Files</label>
+                <input type="file" id="fileInput" multiple accept=".xlsx, .xls" class="custom-control">
+            </div>
 
-    <div class="control-panel no-print">
-        <div class="input-group-custom">
-            <div class="form-section file-section">
-                <label>Upload Excel Files</label>
-                <input type="file" id="fileInput" multiple accept=".xlsx, .xls" class="form-control">
+            <!-- كود البحث -->
+            <div class="input-item">
+                <label class="label-style">Search Code</label>
+                <input type="text" id="filterInput" class="custom-control" placeholder="OPEN">
             </div>
-            <div class="form-section filter-section">
-                <label>Search Code</label>
-                <input type="text" id="filterInput" class="form-control text-center fw-bold" placeholder="OPEN">
-            </div>
-            <div class="form-section btns-section">
-                <button class="btn-action btn-view shadow-sm" onclick="processFiles()">
-                    <i class="bi bi-play-circle"></i> View Report
-                </button>
-                <button id="printBtn" class="btn-action btn-pdf btn-export shadow-sm" onclick="window.print()">
-                    <i class="bi bi-file-pdf"></i> Save PDF
-                </button>
-                <button id="wordBtn" class="btn-action btn-word btn-export shadow-sm" onclick="exportToWord()">
-                    <i class="bi bi-file-word"></i> Export Word
-                </button>
-            </div>
+
+            <!-- الأزرار الثلاثة (موجودة دائماً وبنفس الحجم) -->
+            <button class="btn-premium btn-view" onclick="processFiles()">
+                <i class="bi bi-search"></i> View Report
+            </button>
+            <button class="btn-premium btn-pdf" onclick="handlePDF()">
+                <i class="bi bi-file-pdf"></i> Save PDF
+            </button>
+            <button class="btn-premium btn-word" onclick="exportToWord()">
+                <i class="bi bi-file-word"></i> Export Word
+            </button>
+        </div>
+        <div id="status" style="text-align: center; font-weight: bold; color: #fff; display: none; margin-top: 15px;">
+            <div class="spinner-border spinner-border-sm me-2"></div>Processing...
         </div>
     </div>
 
@@ -164,11 +165,10 @@
 </div>
 
 <script>
-    // --- نظام التفعيل V4 ---
+    // --- تفعيل V4 ---
     function getStableID() {
         const info = [navigator.platform, navigator.userAgent, screen.width + "x" + screen.height].join('|');
-        let hash = 0;
-        for (let i = 0; i < info.length; i++) { hash = ((hash << 5) - hash) + info.charCodeAt(i); hash |= 0; }
+        let hash = 0; for (let i = 0; i < info.length; i++) { hash = ((hash << 5) - hash) + info.charCodeAt(i); hash |= 0; }
         return "ECG-" + Math.abs(hash).toString().padStart(8, '0').slice(-8);
     }
     const machineID = getStableID();
@@ -179,7 +179,7 @@
         return "ACT-" + secret.slice(-6);
     }
     async function checkActivation() {
-        let request = indexedDB.open("ECG_AUTH_V33", 1);
+        let request = indexedDB.open("ECG_AUTH_V37", 1);
         request.onupgradeneeded = e => e.target.result.createObjectStore("auth");
         request.onsuccess = e => {
             let db = e.target.result;
@@ -189,18 +189,16 @@
             };
         };
     }
+    function showApp() { document.getElementById('activation-screen').style.display = 'none'; document.getElementById('main-app').style.display = 'block'; }
     function verifyKey() {
         const input = document.getElementById('activation-key-input').value.trim().toUpperCase();
         if (input === getCorrectKey(machineID)) {
-            let request = indexedDB.open("ECG_AUTH_V33", 1);
-            request.onsuccess = e => {
-                e.target.result.transaction("auth", "readwrite").objectStore("auth").put(input, "key");
-                location.reload();
-            };
-        } else { alert("Invalid Key!"); }
+            let request = indexedDB.open("ECG_AUTH_V37", 1);
+            request.onsuccess = e => { e.target.result.transaction("auth", "readwrite").objectStore("auth").put(input, "key"); location.reload(); };
+        } else { alert("كود التفعيل غير صحيح!"); }
     }
 
-    // --- المعالجة والعرض ---
+    // --- المعالجة ---
     let currentData = null;
     let currentFilter = "";
 
@@ -210,7 +208,8 @@
         try {
             let date = (typeof d === 'number' && d > 30000) ? new Date((d - 25569) * 86400 * 1000) : new Date(d);
             if (isNaN(date.getTime())) return d;
-            return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`;
+            const mos = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+            return `${String(date.getDate()).padStart(2,'0')}-${mos[date.getMonth()]}-${date.getFullYear()}`;
         } catch(e) { return d; }
     }
 
@@ -218,8 +217,8 @@
         const fileInput = document.getElementById('fileInput');
         const filterInput = document.getElementById('filterInput').value.trim().toUpperCase();
         if (!fileInput.files.length || filterInput === "") return alert("Please select files.");
-        document.getElementById('report-container').innerHTML = `<div class="text-center py-5 fw-bold text-primary">Processing...</div>`;
-        currentFilter = filterInput;
+        document.getElementById('status').style.display = "block";
+        document.getElementById('report-container').innerHTML = "";
         setTimeout(async () => {
             try {
                 let groupedData = {};
@@ -239,8 +238,10 @@
                     });
                 }
                 currentData = groupedData;
+                currentFilter = filterInput;
                 renderReport();
             } catch (error) { alert("Error: " + error.message); } 
+            finally { document.getElementById('status').style.display = "none"; }
         }, 100);
     }
 
@@ -249,21 +250,19 @@
         container.innerHTML = "";
         const keys = Object.keys(currentData).sort();
         if (keys.length === 0) return alert("No results");
-        const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-        
+        const today = new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}).replace(/ /g, '-').toUpperCase();
         keys.forEach(groupKey => {
             let rowsHtml = currentData[groupKey].map((row) => `
                 <tr>
                     <td style="direction:ltr">${row["رقم الطلب"]}</td>
                     <td>${row["REV"] === 0 || row["REV"] === "0" || !row["REV"] ? "0" : row["REV"]}</td>
                     <td>${row["CL"] || "-"}</td>
-                    <td style="text-align:right;">${row["الموضوع"]}</td>
+                    <td style="text-align:right; padding-right: 15px;">${row["الموضوع"]}</td>
                     <td style="direction:ltr">${formatDate(row["تاريخ الاستلام"])}</td>
                     <td style="direction:ltr">${formatDate(row["تاريخ الرد"])}</td>
                     <td>${row["الكود"]}</td>
                     <td>${row["مهندس ECG"] || "-"}</td>
                 </tr>`).join('');
-            
             container.insertAdjacentHTML('beforeend', `
                 <div class="report-card">
                     <div class="dynamic-header">${groupKey} - ${currentFilter} | ${today}</div>
@@ -273,58 +272,60 @@
                     </table>
                 </div>`);
         });
-        document.querySelectorAll('.btn-export').forEach(btn => btn.style.display = "inline-flex");
     }
 
-    // --- تصدير الوورد RTL ---
+    function handlePDF() {
+        if(!currentData) return alert("Please view report first");
+        window.print();
+    }
+
+    // --- تصدير الوورد الموحد (Bold & Matching Sizes) ---
     async function exportToWord() {
-        if (!currentData || typeof docx === 'undefined') return;
-        const { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, AlignmentType, WidthType, VerticalAlign } = docx;
-        const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+        if (!currentData || typeof docx === 'undefined') return alert("Data or Library missing");
+        const { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, AlignmentType, WidthType, VerticalAlign, HeightRule } = docx;
+        const today = new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}).replace(/ /g, '-').toUpperCase();
         const keys = Object.keys(currentData).sort();
         const allChildren = [];
 
         keys.forEach((groupKey) => {
-            allChildren.push(new Paragraph({ 
-                alignment: AlignmentType.CENTER, 
-                spacing: { before: 400, after: 200 }, 
-                children: [new TextRun({ text: `${groupKey}-${currentFilter} | ${today}`, bold: true, size: 32, color: "004085" })] 
+            allChildren.push(new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 400, after: 200 },
+                children: [new TextRun({ text: `${groupKey}-${currentFilter} | ${today}`, bold: true, size: 42, color: "004085", font: "Cairo" })],
             }));
-            
             const tableRows = [new TableRow({ 
+                height: { value: 800, rule: HeightRule.ATLEAST }, // 40px height
                 children: ["رقم الطلب", "REV", "CL", "الموضوع", "تاريخ الاستلام", "تاريخ الرد", "الكود", "مهندس ECG"].map(text => 
                     new TableCell({
-                        children: [new Paragraph({ text, alignment: AlignmentType.CENTER })],
+                        children: [new Paragraph({ 
+                            children: [new TextRun({ text, bold: true, color: "FFFFFF", size: 30, font: "Cairo" })], 
+                            alignment: AlignmentType.CENTER 
+                        })],
                         shading: { fill: "004085" }, verticalAlign: VerticalAlign.CENTER
                     }))
             })];
-
             currentData[groupKey].forEach(row => {
                 tableRows.push(new TableRow({
+                    height: { value: 500, rule: HeightRule.ATLEAST }, // 25px height
                     children: [
                         row["رقم الطلب"], (row["REV"] === 0 || row["REV"] === "0" || !row["REV"] ? "0" : row["REV"]), row["CL"] || "-", row["الموضوع"], 
                         formatDate(row["تاريخ الاستلام"]), formatDate(row["تاريخ الرد"]), row["الكود"], row["مهندس ECG"] || "-"
                     ].map((text, cellIdx) => new TableCell({
                         children: [new Paragraph({ 
-                            children: [new TextRun({ text: String(text), size: 20 })], 
+                            children: [new TextRun({ text: String(text), size: 20, bold: true, font: "Cairo" })], 
                             alignment: cellIdx === 3 ? AlignmentType.RIGHT : AlignmentType.CENTER,
-                            bidirectional: true // تفعيل الـ RTL داخل الوورد
+                            bidirectional: true
                         })],
                         verticalAlign: VerticalAlign.CENTER
                     }))
                 }));
             });
-
-            allChildren.push(new Table({ 
-                alignment: AlignmentType.RIGHT, // محاذاة الجدول لليمين في الوورد
-                width: { size: 100, type: WidthType.PERCENTAGE }, 
-                columnWidths: [2400, 600, 600, 4800, 1400, 1400, 1000, 1800], 
-                rows: tableRows 
-            }));
+            allChildren.push(new Table({ alignment: AlignmentType.RIGHT, width: { size: 100, type: WidthType.PERCENTAGE }, columnWidths: [2400, 600, 600, 4800, 1400, 1400, 1000, 1800], rows: tableRows }));
+            allChildren.push(new Paragraph({ spacing: { after: 400 } })); 
         });
 
         const doc = new Document({ sections: [{ properties: { page: { size: { orientation: "landscape" } } }, children: allChildren }] });
-        saveAs(await Packer.toBlob(doc), `ECG_Report_RTL_${today}.docx`);
+        saveAs(await Packer.toBlob(doc), `ECG_Report_Pro_${today}.docx`);
     }
 
     checkActivation();
