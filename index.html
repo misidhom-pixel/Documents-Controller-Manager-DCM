@@ -1,156 +1,333 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>ECG Reports System - Final Edition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>ECG Reports System - RTL Edition V33</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     
+    <script>
+        window.XLSX = {}; 
+        var exports = undefined;
+        var module = undefined;
+    </script>
+
+    <script src="xlsx.full.min.js"></script>
+    <script src="lib/docx.js"></script>
+    <script src="lib/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
     <style>
-        body { font-family: 'Cairo', sans-serif; padding: 20px; background: #f0f4f8; margin: 0; }
-        .container { max-width: 1400px; margin: auto; background: white; padding: 20px; border-radius: 12px; }
-        .no-print { background: #fff; padding: 30px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #ddd; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .controls { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
-        input, button { padding: 15px 25px; font-size: 20px; border-radius: 10px; border: 2px solid #ccc; font-family: 'Cairo'; transition: 0.3s; }
-        input[type="file"] { width: 450px; background: #f9f9f9; cursor: pointer; }
-        #filterInput { width: 250px; font-weight: bold; text-align: center; border: 2px solid #1a73e8; color: #1a73e8; }
-        button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background: #1557b0; transform: translateY(-2px); }
-        #printBtn { background: #28a745; display: none; }
-
-        /* تنسيق التقرير */
-        .page-wrapper { width: 100%; background: white; page-break-after: always; }
-        .dynamic-header { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; padding: 15px; border: 3px solid #004085; color: #004085; background: #f9f9f9; }
-
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 30px; }
-        thead { display: table-header-group; } 
-        th { background-color: #004085 !important; color: white !important; padding: 12px; border: 1px solid #000; font-size: 13px; white-space: nowrap; }
-        td { border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px; word-wrap: break-word; }
-        tr { page-break-inside: avoid; }
-
-        /* منع كسر النص في الأعمدة الثلاثة المحددة */
-        /* عمود رقم الطلب (1) - عمود تاريخ الاستلام (5) - عمود تاريخ الرد (6) */
-        td:nth-child(1), td:nth-child(5), td:nth-child(6) {
-            white-space: nowrap !important;
-            direction: ltr; /* لضمان ظهور أرقام الطلب والتواريخ بشكل صحيح من اليسار لليمين */
-            font-size: 10px; /* تصغير طفيف جداً لضمان الملاءمة */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --danger: #ef4444;
+            --success: #10b981;
+            --sidebar-bg: #1e293b;
         }
 
-        .zero-val { font-weight: bold; color: #d35400; }
+        body { 
+            background: #e2e8f0; 
+            font-family: 'Cairo', sans-serif; 
+            margin: 0; padding: 0; min-height: 100vh;
+            direction: rtl; /* اتجاه الصفحة الأساسي */
+        }
 
+        /* --- شاشة التفعيل --- */
+        #activation-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .act-card { background: white; padding: 40px; border-radius: 24px; width: 480px; text-align: center; }
+
+        /* --- الواجهة الرئيسية --- */
+        .app-container { max-width: 1350px; margin: 30px auto; padding: 0 20px; }
+        
+        .main-header {
+            background: var(--sidebar-bg); color: white;
+            padding: 20px 30px; border-radius: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .control-panel {
+            background: white; border-radius: 24px; padding: 30px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); 
+            margin-bottom: 30px;
+        }
+
+        .input-group-custom { 
+            display: flex; 
+            gap: 30px; 
+            align-items: flex-end; 
+            flex-wrap: wrap; 
+        }
+        
+        .form-section { display: flex; flex-direction: column; gap: 8px; }
+        .file-section { flex: 2; min-width: 320px; }
+        .filter-section { flex: 0.5; min-width: 150px; }
+        .btns-section { flex: 1; min-width: 350px; display: flex; gap: 10px; }
+
+        label { font-size: 14px; font-weight: 700; color: #475569; }
+
+        input.form-control { 
+            background: #f8fafc; border: 2px solid #e2e8f0; 
+            padding: 12px; border-radius: 14px; width: 100%; 
+        }
+
+        .btn-action {
+            padding: 12px 22px; border-radius: 12px; border: none;
+            font-weight: 700; cursor: pointer; display: flex; 
+            align-items: center; gap: 8px; font-size: 14px;
+            white-space: nowrap;
+        }
+        .btn-view { background: var(--primary); color: white; }
+        
+        .btn-export { display: none; }
+        .btn-pdf { background: var(--success); color: white; }
+        .btn-word { background: #2b5797; color: white; }
+
+        /* --- الجداول والعرض --- */
+        .report-card { background: white; border-radius: 16px; margin-top: 25px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .dynamic-header { background: #f1f5f9; color: #1e3a5f; padding: 15px; text-align: center; font-size: 20px; font-weight: 700; border-bottom: 2px solid var(--primary); }
+        
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; direction: rtl; }
+        th { background: var(--sidebar-bg); color: white; padding: 14px 8px; font-size: 13px; text-align: center; border: 1px solid #334155; }
+        td { padding: 10px 8px; text-align: center; font-size: 12px; border: 1px solid #e2e8f0; color: #334155; vertical-align: middle; }
+        tr:nth-child(even) { background: #f8fafc; }
+
+        /* --- إعدادات الطباعة RTL الصارمة --- */
         @media print {
             @page { size: A4 landscape; margin: 8mm; }
             .no-print { display: none !important; }
-            th { -webkit-print-color-adjust: exact; background-color: #004085 !important; color: white !important; }
+            body { background: white; direction: rtl !important; }
+            .report-card { border: 1px solid #000; box-shadow: none; direction: rtl !important; }
+            table { direction: rtl !important; width: 100% !important; }
+            th { background-color: #004085 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .dynamic-header { background-color: #f9f9f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
-
-        /* توزيع العرض الجديد (المقاسات الذهبية) */
-        th:nth-child(1) { width: 20%; } /* رقم الطلب - زدنا العرض */
-        th:nth-child(2) { width: 4%; }  /* REV */
-        th:nth-child(3) { width: 4%; }  /* CL */
-        th:nth-child(4) { width: 26%; } /* الموضوع - قللنا العرض لصالح الآخرين */
-        th:nth-child(5) { width: 12%; } /* تاريخ الاستلام */
-        th:nth-child(6) { width: 12%; } /* تاريخ الرد */
-        th:nth-child(7) { width: 8%; }  /* الكود */
-        th:nth-child(8) { width: 14%; } /* مهندس ECG */
+        
+        /* مقاسات الأعمدة المظبوطة */
+        th:nth-child(1) { width: 18%; } th:nth-child(2) { width: 4%; } th:nth-child(3) { width: 4%; } 
+        th:nth-child(4) { width: 38%; } th:nth-child(5) { width: 9%; } th:nth-child(6) { width: 9%; } 
+        th:nth-child(7) { width: 8%; } th:nth-child(8) { width: 10%; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="no-print">
-        <h2 style="margin-top:0; color:#1a73e8; font-size: 28px;">ECG Reports System</h2>
-        <div class="controls">
-            <input type="file" id="fileInput" multiple accept=".xlsx, .xls">
-            <input type="text" id="filterInput" placeholder="Insert Code">
-            <button onclick="processFiles()">🔍 View Report</button>
-            <button id="printBtn" onclick="window.print()">🖨️ Save/Print</button>
+<div id="activation-screen">
+    <div class="act-card shadow-lg">
+        <i class="bi bi-shield-lock-fill text-primary" style="font-size: 3rem;"></i>
+        <h2 class="mt-3 fw-bold">تفعيل النظام</h2>
+        <div id="display-machine-id" class="machine-id-box" style="color:red">...</div>
+        <input type="text" id="activation-key-input" class="act-input" placeholder="ACT-XXXXXX">
+        <button onclick="verifyKey()" class="btn-action btn-view w-100 justify-content-center py-3">تفعيل الآن</button>
+    </div>
+</div>
+
+<div class="app-container" id="main-app">
+    <div class="main-header no-print">
+        <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-file-earmark-bar-graph-fill fs-2 text-info"></i>
+            <h4 class="m-0 fw-bold">ECG Reports Management</h4>
+        </div>
+        <span class="badge bg-success py-2 px-3"><i class="bi bi-patch-check"></i> Licensed</span>
+    </div>
+
+    <div class="control-panel no-print">
+        <div class="input-group-custom">
+            <div class="form-section file-section">
+                <label>Upload Excel Files</label>
+                <input type="file" id="fileInput" multiple accept=".xlsx, .xls" class="form-control">
+            </div>
+            <div class="form-section filter-section">
+                <label>Search Code</label>
+                <input type="text" id="filterInput" class="form-control text-center fw-bold" placeholder="OPEN">
+            </div>
+            <div class="form-section btns-section">
+                <button class="btn-action btn-view shadow-sm" onclick="processFiles()">
+                    <i class="bi bi-play-circle"></i> View Report
+                </button>
+                <button id="printBtn" class="btn-action btn-pdf btn-export shadow-sm" onclick="window.print()">
+                    <i class="bi bi-file-pdf"></i> Save PDF
+                </button>
+                <button id="wordBtn" class="btn-action btn-word btn-export shadow-sm" onclick="exportToWord()">
+                    <i class="bi bi-file-word"></i> Export Word
+                </button>
+            </div>
         </div>
     </div>
+
     <div id="report-container"></div>
 </div>
 
 <script>
+    // --- نظام التفعيل V4 ---
+    function getStableID() {
+        const info = [navigator.platform, navigator.userAgent, screen.width + "x" + screen.height].join('|');
+        let hash = 0;
+        for (let i = 0; i < info.length; i++) { hash = ((hash << 5) - hash) + info.charCodeAt(i); hash |= 0; }
+        return "ECG-" + Math.abs(hash).toString().padStart(8, '0').slice(-8);
+    }
+    const machineID = getStableID();
+    document.getElementById('display-machine-id').innerText = machineID;
+    function getCorrectKey(id) {
+        let num = id.replace(/\D+/g, '');
+        let secret = (BigInt(num) * 7n + 12345n).toString();
+        return "ACT-" + secret.slice(-6);
+    }
+    async function checkActivation() {
+        let request = indexedDB.open("ECG_AUTH_V33", 1);
+        request.onupgradeneeded = e => e.target.result.createObjectStore("auth");
+        request.onsuccess = e => {
+            let db = e.target.result;
+            db.transaction("auth").objectStore("auth").get("key").onsuccess = ev => {
+                if (ev.target.result === getCorrectKey(machineID)) showApp();
+                else document.getElementById('activation-screen').style.display = 'flex';
+            };
+        };
+    }
+    function verifyKey() {
+        const input = document.getElementById('activation-key-input').value.trim().toUpperCase();
+        if (input === getCorrectKey(machineID)) {
+            let request = indexedDB.open("ECG_AUTH_V33", 1);
+            request.onsuccess = e => {
+                e.target.result.transaction("auth", "readwrite").objectStore("auth").put(input, "key");
+                location.reload();
+            };
+        } else { alert("Invalid Key!"); }
+    }
+
+    // --- المعالجة والعرض ---
+    let currentData = null;
+    let currentFilter = "";
+
     function formatDate(d) {
         if (d === 0 || d === "0") return "0";
         if (!d) return "-";
-        let date = (typeof d === 'number' && d > 30000) ? new Date((d - 25569) * 86400 * 1000) : new Date(d);
-        if (isNaN(date.getTime())) return d;
-        // تنسيق مضغوط DD-MM-YYYY
-        return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`;
+        try {
+            let date = (typeof d === 'number' && d > 30000) ? new Date((d - 25569) * 86400 * 1000) : new Date(d);
+            if (isNaN(date.getTime())) return d;
+            return `${String(date.getDate()).padStart(2,'0')}-${String(date.getMonth()+1).padStart(2,'0')}-${date.getFullYear()}`;
+        } catch(e) { return d; }
     }
 
     async function processFiles() {
         const fileInput = document.getElementById('fileInput');
         const filterInput = document.getElementById('filterInput').value.trim().toUpperCase();
-        const reportContainer = document.getElementById('report-container');
-        
-        if (!fileInput.files.length || filterInput === "") return alert("Please select files and insert a code.");
-        reportContainer.innerHTML = "<p style='text-align:center; font-weight:bold;'>Processing...</p>";
-        
-        let groupedData = {};
-
-        for (let file of fileInput.files) {
-            const data = await file.arrayBuffer();
-            const wb = XLSX.read(data, { cellDates: true });
-            
-            wb.SheetNames.forEach(name => {
-                const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: "" });
-                rows.forEach(row => {
-                    let codeVal = String(row["الكود"] || "").trim().toUpperCase();
-                    if (codeVal === filterInput) {
-                        let orderNum = String(row["رقم الطلب"] || "");
-                        let parts = orderNum.split("-");
-                        let company = parts[0] || "EGC";
-                        let docType = parts[2] || "OTHERS";
-                        
-                        let groupKey = `${company}-${docType}`;
-                        if (!groupedData[groupKey]) groupedData[groupKey] = [];
-                        groupedData[groupKey].push(row);
-                    }
-                });
-            });
-        }
-
-        reportContainer.innerHTML = "";
-        const keys = Object.keys(groupedData).sort();
-        if (keys.length > 0) {
-            keys.forEach(groupKey => {
-                const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-                let html = `
-                    <div class="page-wrapper">
-                        <div class="dynamic-header">${groupKey}-${filterInput} | ${today}</div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>رقم الطلب</th><th>REV</th><th>CL</th><th>الموضوع</th>
-                                    <th>تاريخ الاستلام</th><th>تاريخ الرد</th><th>الكود</th><th>مهندس ECG</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${groupedData[groupKey].map(row => `
-                                    <tr>
-                                        <td>${row["رقم الطلب"]}</td>
-                                        <td>${(row["REV"] === 0 || row["REV"] === "0" || !row["REV"]) ? '<span class="zero-val">0</span>' : row["REV"]}</td>
-                                        <td>${row["CL"] || "-"}</td>
-                                        <td style="text-align:right; direction:rtl;">${row["الموضوع"]}</td>
-                                        <td>${formatDate(row["تاريخ الاستلام"])}</td>
-                                        <td>${formatDate(row["تاريخ الرد"])}</td>
-                                        <td class="zero-val">${row["الكود"]}</td>
-                                        <td>${row["مهندس ECG"] || "-"}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>`;
-                reportContainer.innerHTML += html;
-            });
-            document.getElementById('printBtn').style.display = "inline-block";
-        } else { 
-            alert("No results found."); 
-            reportContainer.innerHTML = "";
-        }
+        if (!fileInput.files.length || filterInput === "") return alert("Please select files.");
+        document.getElementById('report-container').innerHTML = `<div class="text-center py-5 fw-bold text-primary">Processing...</div>`;
+        currentFilter = filterInput;
+        setTimeout(async () => {
+            try {
+                let groupedData = {};
+                for (let file of Array.from(fileInput.files)) {
+                    const data = await file.arrayBuffer();
+                    const wb = window.XLSX.read(data, { cellDates: true });
+                    wb.SheetNames.forEach(name => {
+                        const rows = window.XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: "" });
+                        rows.forEach(row => {
+                            if (String(row["الكود"] || "").trim().toUpperCase() === filterInput) {
+                                let parts = String(row["رقم الطلب"] || "").split("-");
+                                let groupKey = `${parts[0] || "EGC"}-${parts[2] || "OTHERS"}`;
+                                if (!groupedData[groupKey]) groupedData[groupKey] = [];
+                                groupedData[groupKey].push(row);
+                            }
+                        });
+                    });
+                }
+                currentData = groupedData;
+                renderReport();
+            } catch (error) { alert("Error: " + error.message); } 
+        }, 100);
     }
+
+    function renderReport() {
+        const container = document.getElementById('report-container');
+        container.innerHTML = "";
+        const keys = Object.keys(currentData).sort();
+        if (keys.length === 0) return alert("No results");
+        const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+        
+        keys.forEach(groupKey => {
+            let rowsHtml = currentData[groupKey].map((row) => `
+                <tr>
+                    <td style="direction:ltr">${row["رقم الطلب"]}</td>
+                    <td>${row["REV"] === 0 || row["REV"] === "0" || !row["REV"] ? "0" : row["REV"]}</td>
+                    <td>${row["CL"] || "-"}</td>
+                    <td style="text-align:right;">${row["الموضوع"]}</td>
+                    <td style="direction:ltr">${formatDate(row["تاريخ الاستلام"])}</td>
+                    <td style="direction:ltr">${formatDate(row["تاريخ الرد"])}</td>
+                    <td>${row["الكود"]}</td>
+                    <td>${row["مهندس ECG"] || "-"}</td>
+                </tr>`).join('');
+            
+            container.insertAdjacentHTML('beforeend', `
+                <div class="report-card">
+                    <div class="dynamic-header">${groupKey} - ${currentFilter} | ${today}</div>
+                    <table>
+                        <thead><tr><th>رقم الطلب</th><th>REV</th><th>CL</th><th>الموضوع</th><th>تاريخ الاستلام</th><th>تاريخ الرد</th><th>الكود</th><th>مهندس ECG</th></tr></thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>`);
+        });
+        document.querySelectorAll('.btn-export').forEach(btn => btn.style.display = "inline-flex");
+    }
+
+    // --- تصدير الوورد RTL ---
+    async function exportToWord() {
+        if (!currentData || typeof docx === 'undefined') return;
+        const { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, AlignmentType, WidthType, VerticalAlign } = docx;
+        const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+        const keys = Object.keys(currentData).sort();
+        const allChildren = [];
+
+        keys.forEach((groupKey) => {
+            allChildren.push(new Paragraph({ 
+                alignment: AlignmentType.CENTER, 
+                spacing: { before: 400, after: 200 }, 
+                children: [new TextRun({ text: `${groupKey}-${currentFilter} | ${today}`, bold: true, size: 32, color: "004085" })] 
+            }));
+            
+            const tableRows = [new TableRow({ 
+                children: ["رقم الطلب", "REV", "CL", "الموضوع", "تاريخ الاستلام", "تاريخ الرد", "الكود", "مهندس ECG"].map(text => 
+                    new TableCell({
+                        children: [new Paragraph({ text, alignment: AlignmentType.CENTER })],
+                        shading: { fill: "004085" }, verticalAlign: VerticalAlign.CENTER
+                    }))
+            })];
+
+            currentData[groupKey].forEach(row => {
+                tableRows.push(new TableRow({
+                    children: [
+                        row["رقم الطلب"], (row["REV"] === 0 || row["REV"] === "0" || !row["REV"] ? "0" : row["REV"]), row["CL"] || "-", row["الموضوع"], 
+                        formatDate(row["تاريخ الاستلام"]), formatDate(row["تاريخ الرد"]), row["الكود"], row["مهندس ECG"] || "-"
+                    ].map((text, cellIdx) => new TableCell({
+                        children: [new Paragraph({ 
+                            children: [new TextRun({ text: String(text), size: 20 })], 
+                            alignment: cellIdx === 3 ? AlignmentType.RIGHT : AlignmentType.CENTER,
+                            bidirectional: true // تفعيل الـ RTL داخل الوورد
+                        })],
+                        verticalAlign: VerticalAlign.CENTER
+                    }))
+                }));
+            });
+
+            allChildren.push(new Table({ 
+                alignment: AlignmentType.RIGHT, // محاذاة الجدول لليمين في الوورد
+                width: { size: 100, type: WidthType.PERCENTAGE }, 
+                columnWidths: [2400, 600, 600, 4800, 1400, 1400, 1000, 1800], 
+                rows: tableRows 
+            }));
+        });
+
+        const doc = new Document({ sections: [{ properties: { page: { size: { orientation: "landscape" } } }, children: allChildren }] });
+        saveAs(await Packer.toBlob(doc), `ECG_Report_RTL_${today}.docx`);
+    }
+
+    checkActivation();
 </script>
 </body>
 </html>
